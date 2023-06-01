@@ -1,0 +1,24 @@
+# Python generated files
+__pycache__/**
+*.pyc
+
+# Pip generated files
+**/*.egg-info/**
+
+# Vim swap files
+*.swp
+
+# Don't include build files
+build/**
+
+# VSCode logs
+.vscode/**
+
+# Config files
+.flake8
+
+# Ignore lock file because this is a library
+poetry.lock
+
+# Generated html files
+*.html
