@@ -38,10 +38,10 @@ import abc
 from dataclasses import dataclass, field
 
 import numpy as np
-from matplotlib.axes import Axes
 from matplotlib.artist import Artist
+from matplotlib.axes import Axes
 
-_AXIS_SCALE_FACTOR = 1.05
+_AXIS_SCALE_FACTOR = 0.05
 
 
 @dataclass
@@ -74,7 +74,7 @@ class LiveBase(abc.ABC):
         """Matplotlib artists associated with plot"""
 
     @abc.abstractmethod
-    def _update_artists(self, *data_args: tuple[np.ndarray]) -> None:
+    def _update_artists(self, *data_args: tuple[np.ndarray]):
         """
         Method to update artist given new data.
 
@@ -133,7 +133,7 @@ class LiveBase(abc.ABC):
 
         return self.len_data - 1
 
-    def _increment(self, step: int) -> None:
+    def _increment(self, step: int):
         """
         Increment the data index of this plot by step.
 
@@ -148,7 +148,7 @@ class LiveBase(abc.ABC):
         if self._idx > self.max_idx:
             self._idx = self.max_idx
 
-    def _decrement(self, step: int) -> None:
+    def _decrement(self, step: int):
         """
         Decrement the data index of this plot by step.
 
@@ -163,15 +163,15 @@ class LiveBase(abc.ABC):
         if self._idx < 0:
             self._idx = 0
 
-    def _jump_to_end(self) -> None:
+    def _jump_to_end(self):
         """Move data index to the end of plotting data."""
         self._idx = self.max_idx
 
-    def _jump_to_beginning(self) -> None:
+    def _jump_to_beginning(self):
         """Move data index to the beginning of plotting data."""
         self._idx = 0
 
-    def update_axis_limits(self, scale_factor: float = _AXIS_SCALE_FACTOR) -> None:
+    def update_axis_limits(self, scale_factor: float = _AXIS_SCALE_FACTOR):
         """
         Set new axis limits given the current state of the plot.
 
@@ -189,20 +189,29 @@ class LiveBase(abc.ABC):
         xl_ax, xr_ax = self.ax.get_xlim()
         yb_ax, yt_ax = self.ax.get_ylim()
 
-        xl = min(xl, xl_ax) * scale_factor
-        xr = max(xr, xr_ax) * scale_factor
-        yb = min(yb, yb_ax) * scale_factor
-        yt = max(yt, yt_ax) * scale_factor
+        if self.ax.xaxis_inverted():
+            xl = np.nanmax([xl, xl_ax])
+            xr = np.nanmin([xr, xr_ax])
+        else:
+            xl = np.nanmin([xl, xl_ax])
+            xr = np.nanmax([xr, xr_ax])
+
+        if self.ax.yaxis_inverted():
+            yb = np.nanmax([yb, yb_ax])
+            yt = np.nanmin([yt, yt_ax])
+        else:
+            yb = np.nanmin([yb, yb_ax])
+            yt = np.nanmax([yt, yt_ax])
 
         self.ax.set_xlim(left=xl, right=xr)
         self.ax.set_ylim(bottom=yb, top=yt)
 
-    def _redraw_artists(self) -> None:
+    def _redraw_artists(self):
         """Redraw plot artist on canvas for blitting."""
         for artist in self.artists:
             self.ax.draw_artist(artist)
 
-    def _update_plot(self) -> None:
+    def _update_plot(self):
         """
         Update plot by fetching new data and piping it to the appropriate
         `update_artist` method.
@@ -210,7 +219,7 @@ class LiveBase(abc.ABC):
         """
         self._update_artists(*self._get_plot_data())
 
-    def _animate_step(self, step: int) -> None:
+    def _animate_step(self, step: int):
         """
         Increment the data index by step and then update the plot.
 

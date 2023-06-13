@@ -1,9 +1,24 @@
-""" live_stackbar
+# Copyright 2022 John Talbot
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 
-This module implements the LiveStackBar concrete class and associated functions.
-Use this module to create interactive stacked bar plots
-
-"""
+"""This module implements the LiveStackbar concrete LiveBase child class."""
 __author__ = "John Talbot"
 __contact__ = "john.talbot@stanford.edu"
 __copyright__ = "Copyright 2022"
@@ -12,74 +27,70 @@ __license__ = "MIT"
 
 from dataclasses import InitVar, dataclass, field
 from typing import Iterable, Tuple
-from matplotlib.artist import Artist
 
 import numpy as np
+from matplotlib.artist import Artist
 
+from .exceptions import InconsistentArrayShape
 from .live_base import LiveBase
 
 
 @dataclass
 class LiveStackBar(LiveBase):
-    """LiveStackBar
+    """
+    .. _Rectangle: https://matplotlib.org/stable/api/_as_gen/matplotlib.patches.Rectangle.html # noqa: E501
 
-    This is a concrete implementation for a live stacked bar plot. This class
-    will render interactive bars.
+    This class implements an interactive stackbar plot based on a matplotlib
+    `Rectangle`_ object.
+
+    Raises
+    ------
+    InconsistentArrayShape
+        If `x_data` and `y_data` do not have the same shape.
+    ArrayNot1D
+        If `x_data` or `y_data` has more than one dimension.
 
     """
 
-    x_data: InitVar[np.ndarray]
-    """ X-Axis data to plot """
-    y_data: InitVar[np.ndarray]
-    """ Y-Axis data to plot """
+    y_data: list[np.ndarray]
+    """
+    List of (M, N) arrays to plot as bars.
 
-    labels: Iterable[str]
-    """ Legend label for plot """
+    Rows of the array are iterated over in the plots. Columns of the array are
+    treated as separate columns. The bars are stacked in the order of the arrays
+    in the list with the first array on the bottom.
+    """
+
+    x_data: list[float] = None
+    """
+    X-axis values at which to plot each individual bar
+
+    This should contain N values.
+    
+    """
+
+    labels: InitVar[list[str]] = None
+    """Legend labels for each set of bars."""
 
     colors: InitVar[np.ndarray] = field(repr=False, default=None)
-
-    traverse_rows: bool = True
-    """ Flag to traverse rows (default True)"""
 
     _bar_plots: object = field(init=False, repr=False)
     """ Keep account of bar objects here"""
 
-    _xdata: np.ndarray = field(init=False, repr=False)
-    _ydata: np.ndarray = field(init=False, repr=False)
-    _num_epochs: int = field(init=False, repr=False)
-    _num_bars: int = field(init=False, repr=False)
+    @property
+    def len_data(self) -> int:
+        return self.y_data[0].shape[0]
 
     @property
-    def num_bars(self):
-        return self._num_bars
+    def num_bars(self) -> int:
+        return self.y_data[0].shape[1]
 
-    @property
-    def num_epochs(self):
-        return self._num_epochs
+    def __post_init__(self, labels: list[str], colors: np.ndarray):
+        if self.x_data is None:
+            self.x_data = np.arange(self.num_bars).tolist()
 
-    def __post_init__(
-        self, x_data: np.ndarray, y_data: np.ndarray, colors: np.ndarray
-    ) -> None:
-        if self.traverse_rows:
-            y_data_transform = y_data
-        else:
-            y_data_transform = tuple([item.T for item in y_data])
-
-        self._num_epochs = y_data_transform[0].shape[0]
-        self._num_bars = y_data_transform[0].shape[1]
-
-        if x_data is None:
-            x_data_transform = np.arange(self.num_bars)
-        else:
-            x_data_transform = x_data
-
-        self.data_error_checks(x_data_transform, y_data_transform)
-
-        self._xdata = x_data_transform
-        self._ydata = y_data_transform
+        self._validate_data(labels)
         self.heights = self.calc_heights()
-
-        super().__post_init__()
 
         x_plot, y_plot = self.get_new_plot_data()
 
@@ -115,19 +126,15 @@ class LiveStackBar(LiveBase):
 
         self._bar_plots = tuple(barplot_list)
 
-    @property
-    def artist(self) -> Artist:
-        return self._bar_plots[0]
-
     def calc_heights(self):
-        heights = np.zeros(self._ydata[0].shape)
+        heights = np.zeros((self.len_data, self.num_bars))
 
-        for y_array in self._ydata:
+        for y_array in self.y_data:
             heights += y_array
 
         return np.max(heights, axis=1)
 
-    def redraw_plot(self, plot_x: np.ndarray, plot_y: np.ndarray) -> None:
+    def redraw_plot(self, plot_x: np.ndarray, plot_y: np.ndarray):
         bottom = np.zeros(self.num_bars)
         for barplot, y_plot in zip(self._bar_plots, plot_y):
             for idx, rect in enumerate(barplot):
@@ -137,7 +144,7 @@ class LiveStackBar(LiveBase):
 
         self.update_axis_limits()
 
-    def redraw_artist(self) -> None:
+    def redraw_artist(self):
         for barplot in self._bar_plots:
             for rect in barplot:
                 self.plot_axis.draw_artist(rect)
@@ -146,30 +153,18 @@ class LiveStackBar(LiveBase):
         plot_y = [item[self.current_idx, ...] for item in self._ydata]
         return self._xdata, tuple(plot_y)
 
-    def data_error_checks(self, x_data: np.ndarray, y_data: Tuple[np.ndarray]):
-        """Data error checks
+    def _validate_data(self, labels: list[str]):
+        y_shape = self.y_data[0].shape
+        for array in self.y_data:
+            if not array.shape == y_shape:
+                raise InconsistentArrayShape(x_shape=y_shape, y_shape=array.shape)
 
-        Performs initial checks on data to verify it can be
-        plotted correctly. These are defaults, but this
-        method can be overwritten if data needs change.
+        if not self.num_bars == len(self.x_data):
+            raise ValueError("Differing number of bars in x and y data")
 
-        """
-        y_shape = y_data[0].shape
-        for item in y_data:
-            if not item.shape == y_shape:
-                raise ValueError("Y data is not a consistent shape")
+        if not self.num_bars == len(labels):
+            raise ValueError("Differing number of bars in and labels")
 
-        if x_data is not None:
-            if x_data.ndim > 1 or not x_data.size == self.num_bars:
-                raise ValueError(
-                    "X must be None or a 1 dimensional with same length as the"
-                    "non-traversing axis of Y"
-                )
-
-    @property
-    def len_data(self) -> None:
-        return self.num_epochs
-
-    def update_axis_limits(self) -> None:
+    def update_axis_limits(self):
         yheight = self.heights[self.current_idx]
         self.plot_axis.set_ylim(ymin=0.0, ymax=yheight)

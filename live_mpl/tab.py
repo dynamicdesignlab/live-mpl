@@ -30,8 +30,9 @@ from dataclasses import InitVar, dataclass, field
 from typing import Any, List
 
 import gi
-from matplotlib import figure, axes
+from matplotlib.axes import Axes
 from matplotlib.backends import backend_gtk3, backend_gtk3agg
+from matplotlib.figure import Figure
 
 from .live_base import LiveBase
 
@@ -59,8 +60,16 @@ class _NavigationToolbarNoCoordinates(backend_gtk3.NavigationToolbar2GTK3):
 @dataclass
 class Tab:
     """
+    .. _Axes: https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes # noqa E501
+
     This class implements an GTK notebook tab on which to create matplotlib
-    Axes for both classic and interactive plots.
+    `Axes`_ for both classic and interactive plots.
+
+    Note
+    ----
+        For the Tab to work properly, it must be registered to an existing
+        :class:`~live_mpl.window.Window` instance using the
+        :meth:`~live_mpl.window.Window.register_tab` method.
 
     See Also
     --------
@@ -74,7 +83,7 @@ class Tab:
     suptitle: InitVar[str] = None
     """Supertitle to use for all subplots."""
 
-    _figure: figure.Figure = field(init=False, repr=False, default=None)
+    _figure: Figure = field(init=False, repr=False, default=None)
     """Matplotlib figure to draw axes on."""
     _canvas: backend_gtk3agg.FigureCanvasGTK3Agg = field(
         init=False, repr=False, default=None
@@ -87,7 +96,7 @@ class Tab:
     _plots: List[LiveBase] = field(init=False, repr=False, default_factory=list)
     """List of LiveBase plots this tab controls."""
 
-    def add_axis(self, *args, **kwargs) -> axes.Axes:
+    def add_axis(self, *args, **kwargs) -> Axes:
         """
         Create matplotlib axis on this tab.
 
@@ -95,13 +104,17 @@ class Tab:
 
         This follows the arguments of the matplotlib `add_subplot`_ function.
 
+        Returns
+        -------
+            Axis handle
+
         """
         ax = self._figure.add_subplot(*args, **kwargs)
         # ax.callbacks.connect("xlim_changed", self.save_bg)
         # ax.callbacks.connect("ylim_changed", self.save_bg)
         return ax
 
-    def register_plot(self, plot: LiveBase) -> None:
+    def register_plot(self, plot: LiveBase):
         """
         Add the given LiveBase plot to the Tab and register it to be updated by
         the Tab. This is a necessary step in making the plot interactive.
@@ -114,21 +127,21 @@ class Tab:
         """
         self._plots.append(plot)
 
-    def _save_bg(self) -> None:
+    def _save_bg(self):
         """Save this tab's background so it can be restored later for blitting."""
         self._canvas.draw()
         self._bg = self._canvas.copy_from_bbox(self._figure.bbox)
 
-    def _draw_bg(self) -> None:
+    def _draw_bg(self):
         """Draw this tab's saved background."""
         self._canvas.restore_region(self._bg)
 
-    def _blit(self) -> None:
+    def _blit(self):
         """Blit this tab's plots."""
         self._canvas.blit(self._figure.bbox)
         self._canvas.flush_events()
 
-    def _increment_all(self, step: int) -> None:
+    def _increment_all(self, step: int):
         """
         Increment all registered live plots by step.
 
@@ -142,7 +155,7 @@ class Tab:
             plot._increment(step)
             plot._update_plot()
 
-    def _decrement_all(self, step: int) -> None:
+    def _decrement_all(self, step: int):
         """
         Decrement all registered live plots by step.
 
@@ -156,29 +169,29 @@ class Tab:
             plot._decrement(step)
             plot._update_plot()
 
-    def _jump_all_to_end(self) -> None:
+    def _jump_all_to_end(self):
         """Jump all plots to their last data item."""
         for plot in self._plots:
             plot._jump_to_end()
             plot._update_plot()
 
-    def _jump_all_to_beginning(self) -> None:
+    def _jump_all_to_beginning(self):
         """Jump all plots to their firse data item."""
         for plot in self._plots:
             plot._jump_to_beginning()
             plot._update_plot()
 
-    def _redraw_artists(self) -> None:
+    def _redraw_artists(self):
         """Redraw all plot artists."""
         for plot in self._plots:
             plot._redraw_artists()
 
-    def _update_all_axis_limits(self) -> None:
+    def update_all_axis_limits(self):
         """Calls the update axis method on all registered plots."""
         for plot in self._plots:
             plot.update_axis_limits()
 
-    def _take_action(self, action: CallbackActionsEnum, step: int = None) -> None:
+    def _take_action(self, action: CallbackActionsEnum, step: int = None):
         """
         Given an action and params, take that action on all plots
 
@@ -203,9 +216,9 @@ class Tab:
         else:
             raise NotImplementedError
 
-    def __post_init__(self, suptitle: str) -> None:
+    def __post_init__(self, suptitle: str):
         self._page = Gtk.VBox()
-        self._figure = figure.Figure(tight_layout=True)
+        self._figure = Figure(tight_layout=True)
         self._canvas = backend_gtk3agg.FigureCanvasGTK3Agg(self._figure)
         self._page.pack_start(self._canvas, True, True, 0)
 
@@ -216,9 +229,7 @@ class Tab:
 
         self._init_figure(toolbar, suptitle)
 
-    def _init_figure(
-        self, toolbar: backend_gtk3.NavigationToolbar2GTK3, suptitle: str
-    ) -> None:
+    def _init_figure(self, toolbar: backend_gtk3.NavigationToolbar2GTK3, suptitle: str):
         """
         Initialize figure with custom toolbar
 

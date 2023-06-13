@@ -25,14 +25,14 @@ __copyright__ = "Copyright 2022"
 __date__ = "2022/05/07"
 __license__ = "MIT"
 
-from matplotlib.patches import Rectangle
-from matplotlib.artist import Artist
 from dataclasses import InitVar, dataclass, field
 
 import numpy as np
+from matplotlib.artist import Artist
+from matplotlib.patches import Rectangle
 
+from .exceptions import ArrayNot1D, InconsistentArrayShape
 from .live_base import LiveBase
-from .exceptions import InconsistentArrayShape, ArrayNot1D
 
 _T = np.ndarray
 
@@ -95,7 +95,7 @@ class LiveRectangle(LiveBase):
     def artists(self) -> list[Artist]:
         return [self._patch]
 
-    def _update_artists(self, x: float, y: float, theta: float) -> None:
+    def _update_artists(self, x: float, y: float, theta: float):
         self._patch.set_xy(xy=(x, y))
         self._patch.set_angle(angle=theta)
 
@@ -126,7 +126,7 @@ class LiveRectangle(LiveBase):
         width: float,
         height: float,
         plot_kwargs: dict,
-    ) -> None:
+    ):
         self._validate_data(x_center, y_center, angle_deg)
         self._x = x_center - (width / 2)
         self._y = y_center - (height / 2)

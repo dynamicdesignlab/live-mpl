@@ -26,14 +26,49 @@ __date__ = "2022/05/07"
 __license__ = "MIT"
 
 from dataclasses import InitVar, dataclass, field
+from typing import Any
+
 import numpy as np
-from matplotlib.lines import Line2D
 from matplotlib.artist import Artist
+from matplotlib.lines import Line2D
 
 from .exceptions import ArrayNot1D, InconsistentArrayShape
 from .live_base import LiveBase
 
 _T = np.ndarray
+
+
+def default_head_kwargs() -> dict[str, Any]:
+    """Default head artist keyword arguments.
+
+    Users normally shouldn't call this function directly.  See `~LiveComet` for
+    more information about available arguments.
+
+    Returns
+    -------
+        Dictionary of keyword arguments for comet head
+
+    """
+    return {
+        "marker": "o",
+        "markeredgecolor": "black",
+        "markersize": 10,
+        "markerfacecolor": "None",
+    }
+
+
+def default_tail_kwargs() -> dict[str, Any]:
+    """Default tail artist keyword arguments.
+
+    Users normally shouldn't call this function directly.  See `~LiveComet` for
+    more information about available arguments.
+
+    Returns
+    -------
+        Dictionary of keyword arguments for comet tail
+
+    """
+    return {"linewidth": 2}
 
 
 @dataclass
@@ -65,7 +100,11 @@ class LiveComet(LiveBase):
 
     .. _plot: https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.plot.html#matplotlib.axes.Axes.plot # noqa: E501
 
-    See matplotlib's `plot`_ for more information about possible arguments.
+    By default all head keyword arguments are populated by the
+    `~live_mpl.live_comet.default_head_kwargs` factory function. Users may overwrite none, any, or
+    all of the arguments specified in that function, and the user's preferences
+    will take priority.  See matplotlib's `plot`_ for more information about
+    possible arguments.
 
     """
     tail_kwargs: InitVar[dict] = None
@@ -74,7 +113,11 @@ class LiveComet(LiveBase):
 
     .. _plot: https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.plot.html#matplotlib.axes.Axes.plot # noqa: E501
 
-    See matplotlib's `plot`_ for more information about possible arguments.
+    By default all tail keyword arguments are populated by the
+    `~live_mpl.live_comet.default_tail_kwargs` factory function. Users may overwrite none, any, or
+    all of the arguments specified in that function, and the user's preferences
+    will take priority.  See matplotlib's `plot`_ for more information about
+    possible arguments.
 
     """
 
@@ -87,15 +130,26 @@ class LiveComet(LiveBase):
     _tail: Line2D = field(init=False, repr=False)
     """Line artist rendering the actual plot."""
 
+    _h_kwargs: dict[str, Any] = field(init=False, default_factory=default_head_kwargs)
+    """
+    User arguments for head appearance mixed with default values from
+    `default_head_kwargs`.
+    """
+    _t_kwargs: dict[str, Any] = field(init=False, default_factory=default_tail_kwargs)
+    """
+    User arguments for tail appearance mixed with default values from
+    `default_tail_kwargs`.
+    """
+
     @property
-    def len_data(self) -> None:
+    def len_data(self):
         return self._x.size
 
     @property
     def artists(self) -> list[Artist]:
         return [self._head, self._tail]
 
-    def _update_artists(self, head_x: _T, head_y: _T, tail_x: _T, tail_y: _T) -> None:
+    def _update_artists(self, head_x: _T, head_y: _T, tail_x: _T, tail_y: _T):
         self._head.set_data(head_x, head_y)
         self._tail.set_data(tail_x, tail_y)
 
@@ -114,7 +168,7 @@ class LiveComet(LiveBase):
             return np.min(head_x), np.max(head_x), np.min(head_y), np.max(head_y)
 
     @staticmethod
-    def _validate_data(x_data: _T, y_data: _T) -> None:
+    def _validate_data(x_data: _T, y_data: _T):
         if x_data.ndim > 1:
             raise ArrayNot1D(ndim=x_data.ndim)
         if y_data.ndim > 1:
@@ -122,35 +176,30 @@ class LiveComet(LiveBase):
         if not x_data.shape == y_data.shape:
             raise InconsistentArrayShape(x_shape=x_data.shape, y_shape=y_data.shape)
 
-    def _create_head(self, head_kwargs: dict) -> Line2D:
-        if head_kwargs is None:
-            head_kwargs = {
-                "marker": "o",
-                "markeredgecolor": "black",
-                "markersize": 10,
-                "markerfacecolor": "None",
-            }
-
+    def _create_head(self) -> Line2D:
         head_x, head_y, _, _ = self._get_plot_data()
-        head, *_ = self.ax.plot(head_x, head_y, animated=True, **head_kwargs)
+        head, *_ = self.ax.plot(head_x, head_y, animated=True, **self._h_kwargs)
 
         return head
 
-    def _create_tail(self, tail_kwargs: dict) -> Line2D:
-        if tail_kwargs is None:
-            tail_kwargs = {"linewidth": 2}
-
+    def _create_tail(self) -> Line2D:
         _, _, tail_x, tail_y = self._get_plot_data()
-        tail, *_ = self.ax.plot(tail_x, tail_y, animated=True, **tail_kwargs)
+        tail, *_ = self.ax.plot(tail_x, tail_y, animated=True, **self._t_kwargs)
         return tail
 
     def __post_init__(
         self, x_data: _T, y_data: _T, head_kwargs: dict, tail_kwargs: dict
-    ) -> None:
+    ):
         self._validate_data(x_data, y_data)
         self._x = x_data
         self._y = y_data
 
+        if head_kwargs is not None:
+            self._h_kwargs.update(head_kwargs)
         self._head = self._create_head(head_kwargs=head_kwargs)
+
+        if tail_kwargs is not None:
+            self._t_kwargs.update(tail_kwargs)
         self._tail = self._create_tail(tail_kwargs=tail_kwargs)
+
         self.update_axis_limits()

@@ -34,7 +34,7 @@ import gi
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-from .tab import Tab, CallbackActionsEnum
+from .tab import CallbackActionsEnum, Tab
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk, Gtk  # noqa: E402 - import must be under previous line
@@ -52,10 +52,10 @@ _FAST_STEP = 50
 @dataclass
 class Window(Gtk.Window):
     """
-    This class subclasses a GTK window acting as the base for interactive
-    plots. The window contains tabs which control the plotting canvas. See the
-    `Tab` class for more information on using tabs, and the `examples` folder
-    for different plotting examples.
+    This class subclasses a GTK window acting as the base for interactive plots.
+    The window contains tabs which control the plotting canvas. See the
+    :class:`~live_mpl.tab.Tab` class for more information on using tabs, and the
+    `examples` folder for different plotting examples.
 
     Note
     ----
@@ -99,7 +99,7 @@ class Window(Gtk.Window):
 
     _notebook: Gtk.Notebook = field(init=False, repr=False)
 
-    def register_tab(self, tab: Tab) -> None:
+    def register_tab(self, tab: Tab):
         """
         Add the given tab to the Window and register it to receive
         callbacks from the Window. This is a necessary step in making
@@ -132,7 +132,7 @@ class Window(Gtk.Window):
         """Return the handle for the current active tab."""
         return self._tabs[self._current_tab_idx]
 
-    def __post_init__(self, title) -> None:
+    def __post_init__(self, title):
         super().__init__(title=title)
 
         self._notebook = Gtk.Notebook()
@@ -144,7 +144,7 @@ class Window(Gtk.Window):
         self.connect("scroll-event", self._mouse_scroll_callback)
         self.connect("configure-event", self._mark_backgrounds_stale)
 
-    def _tab_change_callback(self, notebook, page, page_num) -> None:
+    def _tab_change_callback(self, notebook, page, page_num):
         """
         Callback for a tab change in the window.
 
@@ -156,7 +156,7 @@ class Window(Gtk.Window):
         self.current_tab._save_bg()
         self.current_tab._draw_bg()
 
-    def _mark_backgrounds_stale(self, widget, event) -> None:
+    def _mark_backgrounds_stale(self, widget, event):
         """Set backgrounds stale flag so that backgrounds will be redrawn."""
         self._bg_stale = True
 
@@ -192,7 +192,7 @@ class Window(Gtk.Window):
         # Return true to capture event
         return True
 
-    def _take_action_on_tabs(self, action: CallbackActionsEnum) -> None:
+    def _take_action_on_tabs(self, action: CallbackActionsEnum):
         """
         This method takes the given action on all tabs in the window.
 

@@ -26,13 +26,13 @@ __date__ = "2022/05/07"
 __license__ = "MIT"
 
 from dataclasses import InitVar, dataclass, field
-from matplotlib.lines import Line2D
-from matplotlib.artist import Artist
 
 import numpy as np
+from matplotlib.artist import Artist
+from matplotlib.lines import Line2D
 
-from .live_base import LiveBase
 from .exceptions import InconsistentArrayShape, InvalidIterationAxis
+from .live_base import LiveBase
 
 _T = np.ndarray
 
@@ -86,14 +86,14 @@ class LiveLine(LiveBase):
     """Line artist rendering the actual plot."""
 
     @property
-    def len_data(self) -> None:
+    def len_data(self):
         return self._x.shape[self.iter_axis]
 
     @property
     def artists(self) -> list[Artist]:
         return [self._line]
 
-    def _update_artists(self, plot_x: _T, plot_y: _T) -> None:
+    def _update_artists(self, plot_x: _T, plot_y: _T):
         self._line.set_data(plot_x, plot_y)
 
     def _get_plot_data(self) -> tuple[_T, ...]:
@@ -102,16 +102,15 @@ class LiveLine(LiveBase):
         return plot_x, plot_y
 
     def _get_data_axis_limits(self) -> tuple[float, float, float, float]:
-        xdata, ydata = self._get_plot_data()
-        return np.min(xdata), np.max(xdata), np.min(ydata), np.max(ydata)
+        return np.min(self._x), np.max(self._x), np.min(self._y), np.max(self._y)
 
-    def _validate_data(self, x_data: _T, y_data: _T) -> None:
+    def _validate_data(self, x_data: _T, y_data: _T):
         if not x_data.shape == y_data.shape:
             raise InconsistentArrayShape(x_shape=x_data.shape, y_shape=y_data.shape)
         if self.iter_axis < 0 or self.iter_axis >= x_data.ndim:
             raise InvalidIterationAxis(iter_axis=self.iter_axis, num_dims=x_data.ndim)
 
-    def __post_init__(self, x_data: _T, y_data: _T, plot_kwargs: dict = None) -> None:
+    def __post_init__(self, x_data: _T, y_data: _T, plot_kwargs: dict = None):
         if x_data.ndim == 1:
             self.iter_axis = 0
 
@@ -126,5 +125,3 @@ class LiveLine(LiveBase):
             animated=True,
             **plot_kwargs,
         )
-
-        self.update_axis_limits()

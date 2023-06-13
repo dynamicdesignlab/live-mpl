@@ -25,10 +25,11 @@ __copyright__ = "Copyright 2022"
 __date__ = "2022/05/07"
 __license__ = "MIT"
 
-from dataclasses import dataclass, InitVar, field
+from dataclasses import InitVar, dataclass, field
+
+import numpy as np
 from matplotlib.artist import Artist
 from matplotlib.lines import Line2D
-import numpy as np
 
 from .exceptions import ArrayNot1D
 from .live_base import LiveBase
@@ -69,14 +70,14 @@ class LiveVLine(LiveBase):
     """Line artist rendering the actual plot."""
 
     @property
-    def len_data(self) -> None:
+    def len_data(self):
         return self._x.size
 
     @property
     def artists(self) -> list[Artist]:
         return [self._line]
 
-    def _update_artists(self, plot_x: np.ndarray) -> None:
+    def _update_artists(self, plot_x: np.ndarray):
         self._line.set_xdata(plot_x)
 
     def _get_plot_data(self) -> tuple[np.ndarray, ...]:
@@ -87,8 +88,9 @@ class LiveVLine(LiveBase):
         yb, yt = self.ax.get_ylim()
         return xl, xr, yb, yt
 
-    def __post_init__(self, x_data: np.ndarray, plot_kwargs: dict) -> None:
-        if x_data.ndim > 1:
+    def __post_init__(self, x_data: np.ndarray, plot_kwargs: dict):
+        x_data = x_data.squeeze()
+        if not x_data.ndim == 1:
             raise ArrayNot1D(ndim=x_data.ndim)
 
         self._x = x_data

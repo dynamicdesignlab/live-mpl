@@ -25,16 +25,17 @@ __copyright__ = "Copyright 2022"
 __date__ = "2022/05/07"
 __license__ = "MIT"
 
-from pathlib import Path
 from dataclasses import InitVar, dataclass, field
+from pathlib import Path
+
+import numpy as np
 from matplotlib.artist import Artist
 from matplotlib.image import AxesImage
 from matplotlib.transforms import Affine2D
-import numpy as np
-
-from .exceptions import InconsistentArrayShape, ArrayNot1D
-from .live_base import LiveBase
 from PIL import Image
+
+from .exceptions import ArrayNot1D, InconsistentArrayShape
+from .live_base import LiveBase
 
 _T = np.ndarray
 
@@ -101,7 +102,7 @@ class LiveImage(LiveBase):
         angle_deg: _T,
         image_path: Path,
         plot_kwargs: dict,
-    ) -> None:
+    ):
         self._validate_data(x_center, y_center, angle_deg)
         self._x = x_center
         self._y = y_center
@@ -123,7 +124,7 @@ class LiveImage(LiveBase):
     def artists(self) -> list[Artist]:
         return [self._image]
 
-    def _update_artists(self, x: float, y: float, theta: float) -> None:
+    def _update_artists(self, x: float, y: float, theta: float):
         transform = Affine2D().rotate_deg(theta).translate(x, y)
         self._image.set_transform(transform + self.ax.transData)
 

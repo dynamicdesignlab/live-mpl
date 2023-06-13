@@ -25,19 +25,19 @@ __copyright__ = "Copyright 2022"
 __date__ = "2022/05/07"
 __license__ = "MIT"
 
-from matplotlib.patches import Rectangle
-from enum import Enum
-from dataclasses import dataclass
 import functools
+from dataclasses import dataclass
+from enum import Enum
+from pathlib import Path
 
 import numpy as np
-
-from .live_image import LiveImage
-from .live_fancy_bbox import LiveFancyBBox
-from .live_base import LiveBase
-from .exceptions import InconsistentArrayShape, ArrayNot1D
 from matplotlib.axes import Axes
-from pathlib import Path
+from matplotlib.patches import Rectangle
+
+from .exceptions import ArrayNot1D, InconsistentArrayShape
+from .live_base import LiveBase
+from .live_fancy_bbox import LiveFancyBBox
+from .live_image import LiveImage
 
 _T = np.ndarray
 
@@ -48,16 +48,16 @@ class LiveVehicleConfig:
 
     veh_width: float = 2.0
     """Width of the vehicle in axis units."""
-    veh_height: float = 4.5
+    veh_length: float = 4.5
     """Height of the vehicle in axis units."""
     veh_color: str = "blue"
     """Color of the vehicle."""
     veh_alpha: float = 0.7
     """Transparency of the vehicle."""
 
-    tire_width: float = 0.2
+    tire_width: float = None
     """Width of the tires in axis units."""
-    tire_height: float = 1.125
+    tire_length: float = None
     """Height of the tires in axis units."""
     tire_color: str = "black"
     """Color of the tires."""
@@ -66,6 +66,13 @@ class LiveVehicleConfig:
 
     image_path: Path = None
     """If supplied, this will place the specified image in the center of the vehicle."""
+
+    def __post_init__(self):
+        if self.tire_length is None:
+            self.tire_length = self.veh_length / 4.0
+
+        if self.tire_width is None:
+            self.tire_width = self.tire_length / 5.6
 
 
 class _TireEnum(Enum):
@@ -76,7 +83,7 @@ class _TireEnum(Enum):
 
     def get_body_position(self, config: LiveVehicleConfig) -> tuple[float, float]:
         a, b, c, d = self.value
-        body_x = a * config.veh_height + b * config.tire_height
+        body_x = a * config.veh_length + b * config.tire_length
         body_y = c * config.veh_width + d * config.tire_width
         return body_x, body_y
 
@@ -115,19 +122,19 @@ def create_live_vehicle(
     if config is None:
         config = LiveVehicleConfig()
 
-    _validate_data(x_center, y_center, angle_deg, steering_deg)
+    x, y, psi_deg, delta_deg = _validate_data(
+        x_center, y_center, angle_deg, steering_deg
+    )
 
     plots = []
 
-    plots.append(_create_vehicle_body(ax, x_center, y_center, angle_deg, config))
+    plots.append(_create_vehicle_body(ax, x, y, psi_deg, config))
 
-    partial_tire = functools.partial(
-        _create_tire, ax, x_center, y_center, angle_deg, config
-    )
-    plots += [partial_tire(steering_deg, tire) for tire in _TireEnum]
+    partial_tire = functools.partial(_create_tire, ax, x, y, psi_deg, config)
+    plots += [partial_tire(delta_deg, tire) for tire in _TireEnum]
 
     if config.image_path is not None:
-        plots.append(_create_image(ax, x_center, y_center, angle_deg, config))
+        plots.append(_create_image(ax, x, y, psi_deg, config))
 
     return plots
 
@@ -145,7 +152,7 @@ def _create_vehicle_body(
         y_center=north_m,
         angle_deg=psi_deg,
         width=config.veh_width,
-        height=config.veh_height,
+        height=config.veh_length,
         plot_kwargs={
             "facecolor": config.veh_color,
             "edgecolor": "black",
@@ -166,8 +173,8 @@ def _create_image(
     image_extent = [
         -config.veh_width / 4,
         config.veh_width / 4,
-        -config.veh_height / 4,
-        config.veh_height / 4,
+        -config.veh_length / 4,
+        config.veh_length / 4,
     ]
 
     return LiveImage(
@@ -209,7 +216,7 @@ def _create_tire(
         y_center=tire_north,
         angle_deg=tire_angle_deg,
         width=config.tire_width,
-        height=config.tire_height,
+        height=config.tire_length,
         plot_kwargs={
             "facecolor": config.tire_color,
             "edgecolor": "black",
@@ -237,6 +244,11 @@ def _enu_to_xyu_rotation(psi_rad: _T) -> _T:
 
 
 def _validate_data(x: _T, y: _T, angle: _T, steering: _T):
+    x = x.squeeze()
+    y = y.squeeze()
+    angle = angle.squeeze()
+    steering = steering.squeeze()
+
     if not x.shape == y.shape:
         raise InconsistentArrayShape(x_shape=x.shape, y_shape=y.shape)
     if not x.shape == angle.shape:
@@ -245,3 +257,5 @@ def _validate_data(x: _T, y: _T, angle: _T, steering: _T):
         raise InconsistentArrayShape(x_shape=x.shape, y_shape=steering.shape)
     if not x.ndim == 1:
         raise ArrayNot1D(ndim=x.ndim)
+
+    return x, y, angle, steering

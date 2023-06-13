@@ -33,10 +33,12 @@ __license__ = "MIT"
 
 from pathlib import Path
 from typing import Callable
+
 from matplotlib.animation import FuncAnimation
 from matplotlib.figure import Figure
-from .live_base import LiveBase
 from rich import progress
+
+from .live_base import LiveBase
 
 _ProgBar = progress.Progress(
     progress.TextColumn("[cyan]Generating Animation..."),
@@ -66,11 +68,11 @@ def _create_ani_func(plots: list[LiveBase]) -> tuple[Callable, int]:
 
     num_frames = plots[0].len_data
 
-    def take_step(*_) -> None:
+    def take_step(*_):
         for item in plots:
-            item.animate_step(1)
+            item._animate_step(1)
 
-        return [item.artist for item in plots]
+        return [artist for item in plots for artist in item.artists]
 
     return take_step, num_frames
 
@@ -81,7 +83,7 @@ def animate(
     save_path: Path,
     time_step_s: float,
     show_progress: bool = True,
-) -> None:
+):
     """
     Function to easily create an .mp4 movie from a selection of LiveBase plots.
 
@@ -135,7 +137,7 @@ def animate(
         with _ProgBar as prog:
             task_id = prog.add_task("animator", total=num_frames)
 
-            def progress_callback(current_frame: int, total_frames: int) -> None:
+            def progress_callback(current_frame: int, total_frames: int):
                 prog.update(
                     task_id=task_id, total=total_frames, completed=current_frame
                 )

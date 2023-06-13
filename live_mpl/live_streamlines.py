@@ -10,24 +10,24 @@ __copyright__ = "Copyright 2023"
 __date__ = "2023/04/09"
 __license__ = "MIT"
 
-from dataclasses import dataclass, field
-from typing import Any
-from pathlib import Path
-from matplotlib.artist import Artist
-
-import pickle
 import functools
-from multiprocessing import Pool
-from matplotlib import axis
-from collections import deque
+import pickle
 import warnings
+from collections import deque
+from dataclasses import dataclass, field
+from multiprocessing import Pool
+from pathlib import Path
+from typing import Any
+
 import numpy as np
-from matplotlib.patches import FancyArrowPatch
+from matplotlib import axis
+from matplotlib.artist import Artist
 from matplotlib.collections import LineCollection
+from matplotlib.patches import FancyArrowPatch
 from rich import progress
 
-from .live_base import LiveBase
 from . import streamplot
+from .live_base import LiveBase
 
 ProgBar = progress.Progress(
     progress.TextColumn("[cyan]Calculating Streamplots..."),
@@ -66,7 +66,7 @@ class LiveStreamlines(LiveBase):
     def artist(self) -> Artist:
         return None
 
-    def __post_init__(self) -> None:
+    def __post_init__(self):
         super().__post_init__()
 
     def calc_streamlines(
@@ -78,7 +78,7 @@ class LiveStreamlines(LiveBase):
         color_data: np.ndarray,
         plot_args: dict[str, Any] = None,
         num_workers: int = 4,
-    ) -> None:
+    ):
         self.set_axis_limits(x_data=x_data, y_data=y_data)
         num_epochs = u_data.shape[-1]
 
@@ -98,7 +98,7 @@ class LiveStreamlines(LiveBase):
         self._streamlines = [line for (line, _) in results]
         self._streamarrows = [arrow for (_, arrow) in results]
 
-    def redraw_plot(self, lines: LineCollection, arrows: list[FancyArrowPatch]) -> None:
+    def redraw_plot(self, lines: LineCollection, arrows: list[FancyArrowPatch]):
         if lines is None:
             return
 
@@ -122,7 +122,7 @@ class LiveStreamlines(LiveBase):
 
         self._current_lines = lines
 
-    def redraw_artist(self) -> None:
+    def redraw_artist(self):
         pass
 
     def get_new_plot_data(self) -> tuple[LineCollection, list[FancyArrowPatch]]:
@@ -140,11 +140,11 @@ class LiveStreamlines(LiveBase):
     def asdict(self) -> dict[str, Any]:
         return {"streamlines": self._streamlines, "streamarrows": self._streamarrows}
 
-    def pickle(self, pickle_path: Path) -> None:
+    def pickle(self, pickle_path: Path):
         with open(pickle_path, "wb") as file:
             pickle.dump(self.asdict(), file)
 
-    def load_from_pickle(self, pickle_path: Path) -> None:
+    def load_from_pickle(self, pickle_path: Path):
         with open(pickle_path, "rb") as file:
             stream_dict = pickle.load(file)
 
@@ -152,10 +152,10 @@ class LiveStreamlines(LiveBase):
         self._streamarrows = stream_dict["streamarrows"]
 
     @property
-    def len_data(self) -> None:
+    def len_data(self):
         return len(self._streamlines)
 
-    def set_axis_limits(self, x_data: np.ndarray, y_data: np.ndarray) -> None:
+    def set_axis_limits(self, x_data: np.ndarray, y_data: np.ndarray):
         """Update Axis Limits
 
         This method will scale the axes larger as needed to fit

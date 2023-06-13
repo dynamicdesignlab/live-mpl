@@ -25,15 +25,15 @@ __copyright__ = "Copyright 2022"
 __date__ = "2022/05/07"
 __license__ = "MIT"
 
-from matplotlib.patches import FancyBboxPatch, BoxStyle
-from matplotlib.transforms import Affine2D
-from matplotlib.artist import Artist
 from dataclasses import InitVar, dataclass, field
 
 import numpy as np
+from matplotlib.artist import Artist
+from matplotlib.patches import BoxStyle, FancyBboxPatch
+from matplotlib.transforms import Affine2D
 
+from .exceptions import ArrayNot1D, InconsistentArrayShape
 from .live_base import LiveBase
-from .exceptions import InconsistentArrayShape, ArrayNot1D
 
 _T = np.ndarray
 
@@ -108,7 +108,7 @@ class LiveFancyBBox(LiveBase):
         angle_deg: np.ndarray,
         boxstyle: str | BoxStyle,
         plot_kwargs: dict,
-    ) -> None:
+    ):
         self._validate_data(x_center, y_center, angle_deg)
         self._x = x_center - (self.width / 2.0)
         self._y = y_center - (self.height / 2.0)
@@ -137,7 +137,7 @@ class LiveFancyBBox(LiveBase):
     def artists(self) -> list[Artist]:
         return [self._patch]
 
-    def _update_artists(self, x: float, y: float, theta: float) -> None:
+    def _update_artists(self, x: float, y: float, theta: float):
         self._patch.set_x(x)
         self._patch.set_y(y)
 
@@ -154,10 +154,8 @@ class LiveFancyBBox(LiveBase):
         return x_pos, y_pos, angle
 
     def _get_data_axis_limits(self) -> tuple[float, float, float, float]:
-        # TODO find a better way of calculating this. For now just return axis.
-        xl, xr = self.ax.get_xlim()
-        yb, yt = self.ax.get_ylim()
-        return xl, xr, yb, yt
+        # TODO Find a way to calculate this. For now return NaN's to be ignored.
+        return np.nan, np.nan, np.nan, np.nan
 
     def _validate_data(self, x_center: _T, y_center: _T, angle: _T):
         if not x_center.shape == y_center.shape:
