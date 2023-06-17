@@ -196,10 +196,10 @@ class LiveComet(LiveBase):
 
         if head_kwargs is not None:
             self._h_kwargs.update(head_kwargs)
-        self._head = self._create_head(head_kwargs=head_kwargs)
+        self._head = self._create_head()
 
         if tail_kwargs is not None:
             self._t_kwargs.update(tail_kwargs)
-        self._tail = self._create_tail(tail_kwargs=tail_kwargs)
+        self._tail = self._create_tail()
 
         self.update_axis_limits()
