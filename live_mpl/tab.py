@@ -96,7 +96,7 @@ class Tab:
     _plots: List[LiveBase] = field(init=False, repr=False, default_factory=list)
     """List of LiveBase plots this tab controls."""
 
-    def add_axis(self, *args, **kwargs) -> Axes:
+    def add_subplot(self, *args, **kwargs) -> Axes:
         """
         Create matplotlib axis on this tab.
 
