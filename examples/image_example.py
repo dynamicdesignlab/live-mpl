@@ -1,9 +1,10 @@
-from live_mpl.window import Window
-from live_mpl.tab import Tab
-from live_mpl.live_image import LiveImage
 from pathlib import Path
 
 import numpy as np
+
+from live_mpl.live_image import LiveImage
+from live_mpl.tab import Tab
+from live_mpl.window import Window
 
 IMAGE_PATH = Path(__file__).parent.joinpath("cool_penguin_icon.png")
 
@@ -21,7 +22,7 @@ def main():
     win.register_tab(tab)
 
     # Create a single plot on tab
-    ax = tab.add_axis(
+    ax = tab.add_subplot(
         1, 1, 1, ylabel="YAxis Label", xlabel="XAxis Label", title="Example Image"
     )
 

@@ -25,8 +25,9 @@ __copyright__ = "Copyright 2022"
 __date__ = "2022/05/07"
 __license__ = "MIT"
 
-from live_mpl import Window, Tab, LiveRectangle, LiveLine
 import numpy as np
+
+from live_mpl import LiveLine, LiveRectangle, Tab, Window
 
 
 def main():
@@ -39,7 +40,7 @@ def main():
     win.register_tab(tab)  # Each tab must be registered to it's parent window
 
     # Create a single axis on tab
-    ax = tab.add_axis(
+    ax = tab.add_subplot(
         1, 1, 1, ylabel="YAxis Label", xlabel="XAxis Label", title="Example Plot"
     )
     ax.plot(

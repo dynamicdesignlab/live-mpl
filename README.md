@@ -34,7 +34,7 @@ tab = Tab("First Tab")
 win.register_tab(tab)  # Each tab must be registered to it's parent window
 
 # Create a single axis on tab
-ax = tab.add_axis(
+ax = tab.add_subplot(
     1, 1, 1, ylabel="YAxis Label", xlabel="XAxis Label", title="Example Plot"
 )
 ax.plot(x_data, y_data)  # You can create classic matplotlib plots on this axis
