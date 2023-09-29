@@ -114,18 +114,29 @@ class Window(Gtk.Window):
         self._notebook.append_page(tab._page, Gtk.Label(tab.tab_name))
         self._tabs.append(tab)
 
-    def loop(self):
+    def loop(self, start_gtk: bool = True):
         """
         Sets the gui mainloop watching for events.
+
+        The `start_gtk` parameter allows the use of multiple windows.
+        Either set this true on the last call or call `Gtk.main()` manually
+        after setting up the last window.
 
         Note
         ----
         This method must be called at the end of the plotting script.
 
+        Parameters
+        ----------
+        start_gtk:
+            Start GTK main loop in addition
+
         """
         self.show_all()
         self._notebook.connect("switch-page", self._tab_change_callback)
-        Gtk.main()
+
+        if start_gtk:
+            Gtk.main()
 
     @property
     def current_tab(self) -> Tab:
