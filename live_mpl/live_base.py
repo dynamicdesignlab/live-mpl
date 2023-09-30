@@ -88,7 +88,7 @@ class LiveBase(abc.ABC):
         """
 
     @abc.abstractmethod
-    def _get_plot_data(self) -> tuple[np.ndarray]:
+    def _get_plot_data(self) -> tuple[np.ndarray | list[np.ndarray]]:
         """
         Method returning new data to plot.
 
