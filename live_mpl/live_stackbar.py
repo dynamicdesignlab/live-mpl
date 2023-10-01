@@ -109,7 +109,7 @@ class LiveStackBar(LiveBase):
     def _update_artists(self, _: np.ndarray, plot_y: np.ndarray):
         bottoms = np.zeros(self.num_cols)
 
-        for yvals, bar_ct in zip(plot_y, self._bar_cts):
+        for yvals, bar_ct in zip(plot_y.T, self._bar_cts):
             for yval, bottom, patch in zip(yvals, bottoms, bar_ct):
                 patch.set_height(yval)
                 patch.set_y(bottom)
