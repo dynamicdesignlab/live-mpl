@@ -136,7 +136,11 @@ class Window(Gtk.Window):
         self._notebook.connect("switch-page", self._tab_change_callback)
 
         if start_gtk:
-            Gtk.main()
+            self.start_gtk()
+
+    @staticmethod
+    def start_gtk() -> None:
+        Gtk.main()
 
     @property
     def current_tab(self) -> Tab:
