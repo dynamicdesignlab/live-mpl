@@ -225,7 +225,8 @@ class Tab:
         self._bottom_box = Gtk.Box()
         self._page.pack_start(self._bottom_box, False, False, 0)
 
-        toolbar = _NavigationToolbarNoCoordinates(self._canvas, self._page)
+        # toolbar = _NavigationToolbarNoCoordinates(self._canvas, self._page)
+        toolbar = _NavigationToolbarNoCoordinates(self._canvas)
 
         self._init_figure(toolbar, suptitle)
 
