@@ -34,6 +34,8 @@ from matplotlib.lines import Line2D
 from .exceptions import ArrayNot1D
 from .live_base import LiveBase
 
+_DEFAULT_KWARGS = {"color": "black"}
+
 
 @dataclass
 class LiveVLine(LiveBase):
@@ -95,9 +97,10 @@ class LiveVLine(LiveBase):
 
         self._x = x_data
 
-        if plot_kwargs is None:
-            plot_kwargs = {"color": "black"}
+        full_plot_kwargs = _DEFAULT_KWARGS
+        if plot_kwargs:
+            full_plot_kwargs |= plot_kwargs
 
         self._line = self.ax.axvline(
-            *self._get_plot_data(), animated=True, **plot_kwargs
+            *self._get_plot_data(), animated=True, **full_plot_kwargs
         )
