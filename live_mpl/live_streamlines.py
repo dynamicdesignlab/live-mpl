@@ -48,7 +48,7 @@ def pool_func(
 
 
 def plot_kwargs_factory() -> dict[str, Any]:
-    return {"cmap": "turbo", "broken_streamlines": True, "density": 1.8}
+    return {"cmap": "viridis", "broken_streamlines": True, "density": 1.8}
 
 
 @dataclass
@@ -136,7 +136,9 @@ class LiveStreamlines(LiveBase):
 
         return self._streamlines[self.current_idx], self._streamarrows[self.current_idx]
 
-    def __post_init__(self, plot_kwargs: dict[str, Any], bounds: tuple[float]):
+    def __post_init__(
+        self, bounds: tuple[float] = None, plot_kwargs: dict[str, Any] = None
+    ):
         if plot_kwargs:
             self._plot_kwargs |= plot_kwargs
 
