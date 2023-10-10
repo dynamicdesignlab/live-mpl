@@ -37,38 +37,13 @@ from .live_base import LiveBase
 
 _T = np.ndarray
 
-
-def default_head_kwargs() -> dict[str, Any]:
-    """Default head artist keyword arguments.
-
-    Users normally shouldn't call this function directly.  See `~LiveComet` for
-    more information about available arguments.
-
-    Returns
-    -------
-        Dictionary of keyword arguments for comet head
-
-    """
-    return {
-        "marker": "o",
-        "markeredgecolor": "black",
-        "markersize": 10,
-        "markerfacecolor": "None",
-    }
-
-
-def default_tail_kwargs() -> dict[str, Any]:
-    """Default tail artist keyword arguments.
-
-    Users normally shouldn't call this function directly.  See `~LiveComet` for
-    more information about available arguments.
-
-    Returns
-    -------
-        Dictionary of keyword arguments for comet tail
-
-    """
-    return {"linewidth": 2}
+_DEFAULT_HEAD_KWARGS = {
+    "marker": "o",
+    "markeredgecolor": "black",
+    "markersize": 10,
+    "markerfacecolor": "None",
+}
+_DEFAULT_TAIL_KWARGS = {"linewidth": 2}
 
 
 @dataclass
@@ -130,17 +105,6 @@ class LiveComet(LiveBase):
     _tail: Line2D = field(init=False, repr=False)
     """Line artist rendering the actual plot."""
 
-    _h_kwargs: dict[str, Any] = field(init=False, default_factory=default_head_kwargs)
-    """
-    User arguments for head appearance mixed with default values from
-    `default_head_kwargs`.
-    """
-    _t_kwargs: dict[str, Any] = field(init=False, default_factory=default_tail_kwargs)
-    """
-    User arguments for tail appearance mixed with default values from
-    `default_tail_kwargs`.
-    """
-
     @property
     def len_data(self):
         return self._x.size
@@ -176,15 +140,15 @@ class LiveComet(LiveBase):
         if not x_data.shape == y_data.shape:
             raise InconsistentArrayShape(x_shape=x_data.shape, y_shape=y_data.shape)
 
-    def _create_head(self) -> Line2D:
+    def _create_head(self, head_kwargs: dict[str, Any]) -> Line2D:
         head_x, head_y, _, _ = self._get_plot_data()
-        head, *_ = self.ax.plot(head_x, head_y, animated=True, **self._h_kwargs)
+        head, *_ = self.ax.plot(head_x, head_y, animated=True, **head_kwargs)
 
         return head
 
-    def _create_tail(self) -> Line2D:
+    def _create_tail(self, tail_kwargs: dict[str, Any]) -> Line2D:
         _, _, tail_x, tail_y = self._get_plot_data()
-        tail, *_ = self.ax.plot(tail_x, tail_y, animated=True, **self._t_kwargs)
+        tail, *_ = self.ax.plot(tail_x, tail_y, animated=True, **tail_kwargs)
         return tail
 
     def __post_init__(
@@ -194,12 +158,14 @@ class LiveComet(LiveBase):
         self._x = x_data
         self._y = y_data
 
-        if head_kwargs is not None:
-            self._h_kwargs.update(head_kwargs)
-        self._head = self._create_head()
+        full_head_kwargs = _DEFAULT_HEAD_KWARGS
+        if head_kwargs:
+            full_head_kwargs |= head_kwargs
+        self._head = self._create_head(full_head_kwargs)
 
-        if tail_kwargs is not None:
-            self._t_kwargs.update(tail_kwargs)
-        self._tail = self._create_tail()
+        full_tail_kwargs = _DEFAULT_TAIL_KWARGS
+        if tail_kwargs:
+            full_tail_kwargs |= tail_kwargs
+        self._tail = self._create_tail(full_tail_kwargs)
 
         self.update_axis_limits()

@@ -26,6 +26,7 @@ __date__ = "2022/05/07"
 __license__ = "MIT"
 
 from dataclasses import InitVar, dataclass, field
+from typing import Any
 
 import numpy as np
 from matplotlib.artist import Artist
@@ -35,6 +36,8 @@ from .exceptions import InconsistentArrayShape, InvalidIterationAxis
 from .live_base import LiveBase
 
 _T = np.ndarray
+
+_DEFAULT_KWARGS = {"marker": "*"}
 
 
 @dataclass
@@ -68,7 +71,7 @@ class LiveLine(LiveBase):
     value is only respected if the numpy data has more than 1 dimension.
     """
 
-    plot_kwargs: InitVar[dict] = None
+    plot_kwargs: InitVar[dict[str, Any]] = None
     """
     Optional keyword arguments passed directly to matplotlib plot function.
 
@@ -110,18 +113,17 @@ class LiveLine(LiveBase):
         if self.iter_axis < 0 or self.iter_axis >= x_data.ndim:
             raise InvalidIterationAxis(iter_axis=self.iter_axis, num_dims=x_data.ndim)
 
-    def __post_init__(self, x_data: _T, y_data: _T, plot_kwargs: dict = None):
+    def __post_init__(self, x_data: _T, y_data: _T, plot_kwargs: dict[str, Any]):
         if x_data.ndim == 1:
             self.iter_axis = 0
 
         self._validate_data(x_data, y_data)
         self._x, self._y = x_data, y_data
 
-        if plot_kwargs is None:
-            plot_kwargs = {"marker": "*"}
+        full_kwargs = _DEFAULT_KWARGS
+        if plot_kwargs:
+            full_kwargs |= plot_kwargs
 
         self._line, *_ = self.ax.plot(
-            *self._get_plot_data(),
-            animated=True,
-            **plot_kwargs,
+            *self._get_plot_data(), animated=True, **full_kwargs
         )
