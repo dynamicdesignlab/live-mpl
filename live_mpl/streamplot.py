@@ -3,14 +3,12 @@ Streamline plotting for 2D vector fields.
 
 """
 
-import numpy as np
-
 import matplotlib as mpl
-from matplotlib import _api, cm, patches
-import matplotlib.colors as mcolors
 import matplotlib.collections as mcollections
+import matplotlib.colors as mcolors
 import matplotlib.lines as mlines
-
+import numpy as np
+from matplotlib import _api, cm, patches
 
 __all__ = ["streamplot"]
 
@@ -481,11 +479,13 @@ def calc_streamplot(
             arrow_kw["color"] = cmap(norm(color_values[n]))
 
         p = patches.FancyArrowPatch(
-            arrow_tail, arrow_head, transform=transform, **arrow_kw
+            arrow_tail, arrow_head, transform=transform, animated=True, **arrow_kw
         )
         arrows.append(p)
 
-    lc = mcollections.LineCollection(streamlines, transform=transform, **line_kw)
+    lc = mcollections.LineCollection(
+        streamlines, transform=transform, animated=True, **line_kw
+    )
     lc.sticky_edges.x[:] = [grid.x_origin, grid.x_origin + grid.width]
     lc.sticky_edges.y[:] = [grid.y_origin, grid.y_origin + grid.height]
     if use_multicolor_lines:
