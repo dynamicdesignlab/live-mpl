@@ -35,7 +35,7 @@ from .live_base import LiveBase
 
 _T = np.ndarray
 
-_DEFAULT_KWARGS = (("angles", "xy"), ("width", 0.001))
+_DEFAULT_KWARGS = (("angles", "xy"), ("width", 0.0015))
 
 
 @dataclass
