@@ -68,7 +68,7 @@ class Window(Gtk.Window):
 
     """
 
-    title: InitVar[str]
+    title: InitVar[str] = "PythonPlot"
     """Title of the plotting window."""
 
     slow_step: int = _SLOW_STEP
@@ -114,6 +114,14 @@ class Window(Gtk.Window):
         self._notebook.append_page(tab._page, Gtk.Label(tab.tab_name))
         self._tabs.append(tab)
 
+    @staticmethod
+    def enable_latex() -> None:
+        plt.rcParams["text.usetex"] = True
+
+    @staticmethod
+    def disable_latex() -> None:
+        plt.rcParams["text.usetex"] = False
+
     def loop(self, start_gtk: bool = True):
         """
         Sets the gui mainloop watching for events.
@@ -147,7 +155,7 @@ class Window(Gtk.Window):
         """Return the handle for the current active tab."""
         return self._tabs[self._current_tab_idx]
 
-    def __post_init__(self, title):
+    def __post_init__(self, title: str = "PythonPlot"):
         super().__init__(title=title)
 
         self._notebook = Gtk.Notebook()
