@@ -37,7 +37,7 @@ from .live_base import LiveBase
 
 _T = np.ndarray
 
-_DEFAULT_KWARGS = {"marker": "*"}
+_DEFAULT_KWARGS = (("marker", "*"),)
 
 
 @dataclass
@@ -113,14 +113,14 @@ class LiveLine(LiveBase):
         if self.iter_axis < 0 or self.iter_axis >= x_data.ndim:
             raise InvalidIterationAxis(iter_axis=self.iter_axis, num_dims=x_data.ndim)
 
-    def __post_init__(self, x_data: _T, y_data: _T, plot_kwargs: dict[str, Any]):
+    def __post_init__(self, x_data: _T, y_data: _T, plot_kwargs: dict[str, Any] = None):
         if x_data.ndim == 1:
             self.iter_axis = 0
 
         self._validate_data(x_data, y_data)
         self._x, self._y = x_data, y_data
 
-        full_kwargs = _DEFAULT_KWARGS
+        full_kwargs = {key: val for key, val in _DEFAULT_KWARGS}
         if plot_kwargs:
             full_kwargs |= plot_kwargs
 
