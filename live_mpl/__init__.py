@@ -11,6 +11,7 @@ __date__ = "2022/05/07"
 __license__ = "MIT"
 
 from .live_base import LiveBase
+from .live_circle import LiveCircle
 from .live_comet import LiveComet
 from .live_fancy_bbox import LiveFancyBBox
 from .live_image import LiveImage
