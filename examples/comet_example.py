@@ -26,8 +26,9 @@ __date__ = "2022/05/07"
 __license__ = "MIT"
 
 import numpy as np
+import matplotlib.pyplot as plt
 
-from live_mpl import LiveComet, Tab, Window
+from live_mpl import LiveComet, Tab, Window, animate
 
 
 def main():
@@ -35,22 +36,24 @@ def main():
     x_data = np.linspace(0, 100, 100)
     y_data = np.linspace(0, 100, 100)
 
-    win = Window("Example Plot")
-    tab = Tab("First Tab")
-    win.register_tab(tab)  # Each tab must be registered to it's parent window
+    fig, ax = plt.subplots()
 
     # Create a single axis on tab
-    ax = tab.add_subplot(
-        1, 1, 1, ylabel="YAxis Label", xlabel="XAxis Label", title="Example Plot"
-    )
+ 
     ax.plot(x_data, y_data)  # You can create classic matplotlib plots on this axis
 
+    head_kwargs = {'marker': None}
+    tail_kwargs = {'linewidth': 5, 'color': 'red', 'alpha': 0.5}
     # Create a live comet plot
-    plot = LiveComet(ax=ax, x_data=x_data, y_data=y_data)
+    plot = LiveComet(ax=ax, x_data=x_data, y_data=y_data, head_kwargs=head_kwargs, tail_kwargs=tail_kwargs)
 
-    tab.register_plot(plot)  # Each live plot must be registered to it's parent tab
+    animate.animate(
+        save_path="animation.mp4",
+        fig=fig,
+        plots=[plot],
+        time_step_s=0.1,
+    )
 
-    win.loop()  # This method must be called at the end of the script
 
 
 if __name__ == "__main__":

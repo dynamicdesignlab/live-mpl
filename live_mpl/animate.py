@@ -131,6 +131,7 @@ def animate(
         frames=num_frames,
         interval=time_step_ms,
         blit=True,
+        repeat=True,
     )
 
     if show_progress:
@@ -142,7 +143,63 @@ def animate(
                     task_id=task_id, total=total_frames, completed=current_frame
                 )
 
-            anim.save(str(save_path), progress_callback=progress_callback)
+            anim.save(str(save_path), progress_callback=progress_callback, dpi=500)
             prog.update(task_id=task_id, total=num_frames, completed=num_frames)
     else:
-        anim.save(str(save_path))
+        anim.save(str(save_path), dpi=500)
+
+def animate_now(
+    fig: Figure,
+    plots: list[LiveBase],
+    time_step_s: float,
+):
+    """
+    Function to easily create an .mp4 movie from a selection of LiveBase plots.
+
+    This function will increment each of the LiveBase plots given in the plots
+    argument, and take a snapshot at each increment.  The entire sequence of
+    snapshots is saved to a movie. The figure containing the LiveBase plots can
+    also contain classic matplotlib plots which will remain constant over the movie.
+
+    Optionally, this function will display a progressbar detailing the progress
+    of the animation.
+
+    Note
+    ----
+    This function assumes that all LiveBase plots are created from data with the
+    same underlying timebase.
+
+    In other words, the data contained in each LiveBase plot must have the same
+    number of elements to iterate over, and each given element in a plot's
+    dataset must have occured at the same instant as that element in all the
+    other plots. Using this function of plots containing data from different
+    timebases will lead to a loss of synchronization in the rendered elements,
+    and unusable animations.
+
+    Parameters
+    ----------
+    fig:
+        Figure containing the plots to be animated
+    plots:
+        LiveBase plots to be animated
+    save_path:
+        Full path where the generated movie will be saved
+    time_step_s:
+        Duration between frames in the animation [sec]
+    show_progress:
+        Show a progressbar of the animation status
+
+
+    """
+    time_step_ms = 1_000.0 * time_step_s
+    func, num_frames = _create_ani_func(plots)
+    return FuncAnimation(
+        fig,
+        func=func,
+        frames=num_frames,
+        interval=time_step_ms,
+        blit=True,
+    )
+
+    
+    
