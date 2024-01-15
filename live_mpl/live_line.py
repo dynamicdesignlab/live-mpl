@@ -26,7 +26,7 @@ __date__ = "2022/05/07"
 __license__ = "MIT"
 
 from dataclasses import InitVar, dataclass, field
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 from matplotlib.artist import Artist
@@ -81,6 +81,17 @@ class LiveLine(LiveBase):
 
     """
 
+    callback_func: Callable[[Line2D, int], None] = None
+    """
+    Optional function called when artists are updated
+
+    Arguments
+    ---------
+    index: int
+        Current plot epoch index
+
+    """
+
     _x: _T = field(init=False, repr=False)
     """Post-processed x-data."""
     _y: _T = field(init=False, repr=False)
@@ -97,6 +108,11 @@ class LiveLine(LiveBase):
         return [self._line]
 
     def _update_artists(self, plot_x: _T, plot_y: _T):
+        try:
+            self.callback_func(self._line, self._idx)
+        except TypeError:
+            pass
+
         self._line.set_data(plot_x, plot_y)
 
     def _get_plot_data(self) -> tuple[_T, ...]:
@@ -114,7 +130,10 @@ class LiveLine(LiveBase):
             raise InvalidIterationAxis(iter_axis=self.iter_axis, num_dims=x_data.ndim)
 
     def __post_init__(self, x_data: _T, y_data: _T, plot_kwargs: dict[str, Any] = None):
-        if x_data.ndim == 1:
+        x_data = np.atleast_2d(x_data)
+        y_data = np.atleast_2d(y_data)
+
+        if np.atleast_1d(x_data.squeeze()).ndim == 1:
             self.iter_axis = 0
 
         self._validate_data(x_data, y_data)

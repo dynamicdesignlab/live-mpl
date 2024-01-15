@@ -91,7 +91,7 @@ class LiveVLine(LiveBase):
         return xl, xr, yb, yt
 
     def __post_init__(self, x_data: np.ndarray, plot_kwargs: dict):
-        x_data = x_data.squeeze()
+        x_data = np.atleast_1d(x_data.squeeze())
         if not x_data.ndim == 1:
             raise ArrayNot1D(ndim=x_data.ndim)
 
