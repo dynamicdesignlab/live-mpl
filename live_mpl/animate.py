@@ -83,6 +83,7 @@ def animate(
     save_path: Path,
     time_step_s: float,
     show_progress: bool = True,
+    **kwargs,
 ):
     """
     Function to easily create an .mp4 movie from a selection of LiveBase plots.
@@ -143,10 +144,10 @@ def animate(
                     task_id=task_id, total=total_frames, completed=current_frame
                 )
 
-            anim.save(str(save_path), progress_callback=progress_callback, dpi=500)
+            anim.save(str(save_path), progress_callback=progress_callback, **kwargs)
             prog.update(task_id=task_id, total=num_frames, completed=num_frames)
     else:
-        anim.save(str(save_path), dpi=500)
+        anim.save(str(save_path), **kwargs)
 
 
 def animate_now(
