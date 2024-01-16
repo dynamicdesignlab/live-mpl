@@ -148,6 +148,7 @@ def animate(
     else:
         anim.save(str(save_path), dpi=500)
 
+
 def animate_now(
     fig: Figure,
     plots: list[LiveBase],
@@ -200,6 +201,3 @@ def animate_now(
         interval=time_step_ms,
         blit=True,
     )
-
-    
-    

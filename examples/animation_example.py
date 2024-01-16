@@ -25,10 +25,11 @@ __copyright__ = "Copyright 2022"
 __date__ = "2022/05/07"
 __license__ = "MIT"
 
-from matplotlib.axes import Axes
-from matplotlib import pyplot as plt
-from live_mpl import LiveBase, create_live_vehicle, LiveLine, animate
 import numpy as np
+from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
+
+from live_mpl import LiveBase, LiveLine, animate, create_live_vehicle
 
 NUM_FRAMES = 100
 
@@ -112,7 +113,6 @@ def main():
         fig=fig,
         plots=plots,
         time_step_s=0.1,
-        num_frames=NUM_FRAMES,
     )
 
 
