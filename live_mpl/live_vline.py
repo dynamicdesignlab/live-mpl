@@ -55,6 +55,9 @@ class LiveVLine(LiveBase):
     x_data: InitVar[np.ndarray]
     """1-Dimensional x-axis data to plot."""
 
+    animated: bool = True
+    """Whether plot should be animated or not."""
+
     plot_kwargs: InitVar[dict] = None
     """
     Optional keyword arguments passed directly to matplotlib plot function.
@@ -72,18 +75,14 @@ class LiveVLine(LiveBase):
     """Line artist rendering the actual plot."""
 
     @property
-    def len_data(self):
-        return self._x.size
-
-    @property
     def artists(self) -> list[Artist]:
         return [self._line]
 
     def _update_artists(self, plot_x: np.ndarray):
         self._line.set_xdata(plot_x)
 
-    def _get_plot_data(self) -> tuple[np.ndarray, ...]:
-        return (self._x[self.current_idx],)
+    def _get_plot_data(self, idx: int) -> tuple[np.ndarray, ...]:
+        return (self._x[idx],)
 
     def _get_data_axis_limits(self) -> tuple[float, float, float, float]:
         xl, xr = self.ax.get_xlim()
@@ -102,5 +101,5 @@ class LiveVLine(LiveBase):
             full_plot_kwargs |= plot_kwargs
 
         self._line = self.ax.axvline(
-            *self._get_plot_data(), animated=True, **full_plot_kwargs
+            *self._get_plot_data(idx=0), animated=self.animated, **full_plot_kwargs
         )

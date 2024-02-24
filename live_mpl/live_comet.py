@@ -69,6 +69,9 @@ class LiveComet(LiveBase):
     y_data: InitVar[_T]
     """1-Dimensional y-axis data to plot."""
 
+    animated: bool = True
+    """Whether plot should be animated or not."""
+
     head_kwargs: InitVar[dict] = None
     """
     Optional keyword arguments controlling the appearance of the comet's head.
@@ -117,11 +120,11 @@ class LiveComet(LiveBase):
         self._head.set_data(head_x, head_y)
         self._tail.set_data(tail_x, tail_y)
 
-    def _get_plot_data(self) -> tuple[_T, ...]:
-        head_x = self._x[self.current_idx]
-        head_y = self._y[self.current_idx]
-        tail_x = self._x[: self.current_idx]
-        tail_y = self._y[: self.current_idx]
+    def _get_plot_data(self, idx: int) -> tuple[_T, ...]:
+        head_x = self._x[idx]
+        head_y = self._y[idx]
+        tail_x = self._x[:idx]
+        tail_y = self._y[:idx]
         return head_x, head_y, tail_x, tail_y
 
     def _get_data_axis_limits(self) -> tuple[float, float, float, float]:
@@ -141,14 +144,14 @@ class LiveComet(LiveBase):
             raise InconsistentArrayShape(x_shape=x_data.shape, y_shape=y_data.shape)
 
     def _create_head(self, head_kwargs: dict[str, Any]) -> Line2D:
-        head_x, head_y, _, _ = self._get_plot_data()
-        head, *_ = self.ax.plot(head_x, head_y, animated=True, **head_kwargs)
+        head_x, head_y, _, _ = self._get_plot_data(idx=0)
+        head, *_ = self.ax.plot(head_x, head_y, animated=self.animated, **head_kwargs)
 
         return head
 
     def _create_tail(self, tail_kwargs: dict[str, Any]) -> Line2D:
-        _, _, tail_x, tail_y = self._get_plot_data()
-        tail, *_ = self.ax.plot(tail_x, tail_y, animated=True, **tail_kwargs)
+        _, _, tail_x, tail_y = self._get_plot_data(idx=0)
+        tail, *_ = self.ax.plot(tail_x, tail_y, animated=self.animated, **tail_kwargs)
         return tail
 
     def __post_init__(

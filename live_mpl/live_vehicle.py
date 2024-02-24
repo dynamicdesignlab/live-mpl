@@ -46,12 +46,17 @@ _T = np.ndarray
 class LiveVehicleConfig:
     """Configuration class controlling the appearance of the vehicle."""
 
+    label: str = None
+    """Legend label for vehicle body"""
+
     veh_width: float = 2.0
     """Width of the vehicle in axis units."""
     veh_length: float = 4.5
     """Height of the vehicle in axis units."""
-    veh_color: str = "blue"
-    """Color of the vehicle."""
+    veh_facecolor: str = "blue"
+    """Face color of the vehicle."""
+    veh_edgecolor: str = "black"
+    """Edge color of the vehicle."""
     veh_alpha: float = 0.7
     """Transparency of the vehicle."""
 
@@ -59,13 +64,22 @@ class LiveVehicleConfig:
     """Width of the tires in axis units."""
     tire_length: float = None
     """Height of the tires in axis units."""
-    tire_color: str = "black"
-    """Color of the tires."""
+    tire_facecolor: str = "black"
+    """Face color of the tires."""
+    tire_edgecolor: str = "black"
+    """Edge color of the tires."""
     tire_alpha: float = 0.7
     """Transparency of the tires."""
 
     image_path: Path = None
     """If supplied, this will place the specified image in the center of the vehicle."""
+    zorder: int = 2
+    """Set priority in matplotlib plot axis"""
+    image_zorder: int = 3
+    """
+    Set priority of image in matplotlib plot axis.
+    This should be higher than other zorder param.
+    """
 
     def __post_init__(self):
         if self.tire_length is None:
@@ -95,6 +109,7 @@ def create_live_vehicle(
     angle_deg: _T,
     steering_deg: _T,
     config: LiveVehicleConfig = None,
+    animated: bool = True,
 ) -> list[LiveBase]:
     """
     Create a live vehicle plot by building several fancybbox plots around a vehicle's
@@ -128,9 +143,9 @@ def create_live_vehicle(
 
     plots = []
 
-    plots.append(_create_vehicle_body(ax, x, y, psi_deg, config))
+    plots.append(_create_vehicle_body(ax, x, y, psi_deg, config, animated))
 
-    partial_tire = functools.partial(_create_tire, ax, x, y, psi_deg, config)
+    partial_tire = functools.partial(_create_tire, ax, x, y, psi_deg, config, animated)
     plots += [partial_tire(delta_deg, tire) for tire in _TireEnum]
 
     if config.image_path is not None:
@@ -145,7 +160,18 @@ def _create_vehicle_body(
     north_m: _T,
     psi_deg: _T,
     config: LiveVehicleConfig,
+    animated: bool,
 ) -> LiveFancyBBox:
+    plot_kwargs = {
+        "facecolor": config.veh_facecolor,
+        "edgecolor": config.veh_edgecolor,
+        "alpha": config.veh_alpha,
+        "zorder": config.zorder,
+    }
+
+    if config.label is not None:
+        plot_kwargs["label"] = config.label
+
     return LiveFancyBBox(
         ax=ax,
         x_center=east_m,
@@ -153,13 +179,8 @@ def _create_vehicle_body(
         angle_deg=psi_deg,
         width=config.veh_width,
         height=config.veh_length,
-        plot_kwargs={
-            "facecolor": config.veh_color,
-            "edgecolor": "black",
-            "alpha": config.veh_alpha,
-            "zorder": 2.0,
-            "label": "Vehicle",
-        },
+        animated=animated,
+        plot_kwargs=plot_kwargs,
     )
 
 
@@ -184,7 +205,7 @@ def _create_image(
         theta_rad=psi_rad,
         image_extent=image_extent,
         image_path=config.image_path,
-        plot_kwargs={"zorder": 3.0},
+        plot_kwargs={"zorder": config.image_zorder},
     )
 
 
@@ -194,6 +215,7 @@ def _create_tire(
     north_m: _T,
     psi_deg: _T,
     config: LiveVehicleConfig,
+    animated: bool,
     delta_deg: _T,
     tire: _TireEnum,
 ) -> tuple[Rectangle, ...]:
@@ -217,11 +239,12 @@ def _create_tire(
         angle_deg=tire_angle_deg,
         width=config.tire_width,
         height=config.tire_length,
+        animated=animated,
         plot_kwargs={
-            "facecolor": config.tire_color,
-            "edgecolor": "black",
+            "facecolor": config.tire_facecolor,
+            "edgecolor": config.tire_edgecolor,
             "alpha": config.tire_alpha,
-            "zorder": 2.0,
+            "zorder": config.zorder,
         },
     )
 
@@ -244,10 +267,10 @@ def _enu_to_xyu_rotation(psi_rad: _T) -> _T:
 
 
 def _validate_data(x: _T, y: _T, angle: _T, steering: _T):
-    x = x.squeeze()
-    y = y.squeeze()
-    angle = angle.squeeze()
-    steering = steering.squeeze()
+    x = np.atleast_1d(x.squeeze())
+    y = np.atleast_1d(y.squeeze())
+    angle = np.atleast_1d(angle.squeeze())
+    steering = np.atleast_1d(steering.squeeze())
 
     if not x.shape == y.shape:
         raise InconsistentArrayShape(x_shape=x.shape, y_shape=y.shape)

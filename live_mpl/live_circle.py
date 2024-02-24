@@ -61,6 +61,9 @@ class LiveCircle(LiveBase):
     radius: InitVar[_T]
     """Radius of the circle in axis units."""
 
+    animated: bool = True
+    """Whether plot should be animated or not."""
+
     plot_kwargs: InitVar[dict] = None
     """
     Optional keyword arguments passed directly to matplotlib rectangle patch
@@ -80,10 +83,6 @@ class LiveCircle(LiveBase):
     """Rectangle artist rendering the actual patch."""
 
     @property
-    def len_data(self) -> int:
-        return self._x.size
-
-    @property
     def artists(self) -> list[Artist]:
         return [self._patch]
 
@@ -91,10 +90,10 @@ class LiveCircle(LiveBase):
         self._patch.set_center(xy=(x, y))
         self._patch.set_radius(radius=radius)
 
-    def _get_plot_data(self) -> tuple[_T]:
-        x_pos = self._x[self.current_idx]
-        y_pos = self._y[self.current_idx]
-        radius = self._radius[self.current_idx]
+    def _get_plot_data(self, idx: int) -> tuple[_T]:
+        x_pos = self._x[idx]
+        y_pos = self._y[idx]
+        radius = self._radius[idx]
         return x_pos, y_pos, radius
 
     def _get_data_axis_limits(self) -> tuple[float, float, float, float]:
@@ -127,11 +126,11 @@ class LiveCircle(LiveBase):
         if plot_kwargs is None:
             plot_kwargs = {}
 
-        x, y, radius = self._get_plot_data()
+        x, y, radius = self._get_plot_data(idx=0)
         self._patch = Circle(
             xy=(x, y),
             radius=radius,
-            animated=True,
+            animated=self.animated,
             **plot_kwargs,
         )
 

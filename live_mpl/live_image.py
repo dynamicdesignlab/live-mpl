@@ -77,6 +77,9 @@ class LiveImage(LiveBase):
     image_path: InitVar[Path]
     """Path to image."""
 
+    animated: bool = True
+    """Whether plot should be animated or not."""
+
     plot_kwargs: InitVar[dict] = None
     """
     Optional keyword arguments passed directly to matplotlib's AxesImage
@@ -112,13 +115,9 @@ class LiveImage(LiveBase):
             plot_kwargs = {}
 
         self._image = AxesImage(
-            self.ax, extent=self.image_extent, animated=True, **plot_kwargs
+            self.ax, extent=self.image_extent, animated=self.animated, **plot_kwargs
         )
         self._image.set_data(Image.open(image_path))
-
-    @property
-    def len_data(self) -> int:
-        return self._x.size
 
     @property
     def artists(self) -> list[Artist]:
@@ -128,10 +127,10 @@ class LiveImage(LiveBase):
         transform = Affine2D().rotate_deg(theta).translate(x, y)
         self._image.set_transform(transform + self.ax.transData)
 
-    def _get_plot_data(self) -> tuple[_T, ...]:
-        x_pos = self._x[self.current_idx]
-        y_pos = self._y[self.current_idx]
-        angle = self._theta[self.current_idx]
+    def _get_plot_data(self, idx: int) -> tuple[_T, ...]:
+        x_pos = self._x[idx]
+        y_pos = self._y[idx]
+        angle = self._theta[idx]
         return x_pos, y_pos, angle
 
     def _get_data_axis_limits(self) -> tuple[float, float, float, float]:

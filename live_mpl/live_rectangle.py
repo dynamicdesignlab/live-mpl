@@ -69,6 +69,9 @@ class LiveRectangle(LiveBase):
     height: InitVar[float]
     """Height of the rectangle in axis units."""
 
+    animated: bool = True
+    """Whether plot should be animated or not."""
+
     plot_kwargs: InitVar[dict] = None
     """
     Optional keyword arguments passed directly to matplotlib rectangle patch
@@ -88,10 +91,6 @@ class LiveRectangle(LiveBase):
     """Rectangle artist rendering the actual patch."""
 
     @property
-    def len_data(self) -> int:
-        return self._x.size
-
-    @property
     def artists(self) -> list[Artist]:
         return [self._patch]
 
@@ -99,10 +98,10 @@ class LiveRectangle(LiveBase):
         self._patch.set_xy(xy=(x, y))
         self._patch.set_angle(angle=theta)
 
-    def _get_plot_data(self) -> tuple[_T]:
-        x_pos = self._x[self.current_idx]
-        y_pos = self._y[self.current_idx]
-        angle = self._theta[self.current_idx]
+    def _get_plot_data(self, idx: int) -> tuple[_T]:
+        x_pos = self._x[int]
+        y_pos = self._y[int]
+        angle = self._theta[int]
         return x_pos, y_pos, angle
 
     def _get_data_axis_limits(self) -> tuple[float, float, float, float]:
@@ -135,14 +134,14 @@ class LiveRectangle(LiveBase):
         if plot_kwargs is None:
             plot_kwargs = {}
 
-        x, y, theta = self._get_plot_data()
+        x, y, theta = self._get_plot_data(idx=0)
         self._patch = Rectangle(
             xy=(x, y),
             angle=theta,
             width=width,
             height=height,
             rotation_point="center",
-            animated=True,
+            animated=self.animated,
             **plot_kwargs,
         )
 

@@ -35,7 +35,7 @@ __date__ = "2022/05/07"
 __license__ = "MIT"
 
 import abc
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 from matplotlib.artist import Artist
@@ -60,14 +60,6 @@ class LiveBase(abc.ABC):
     ax: Axes
     """Matplotlib axis to plot on."""
 
-    _idx: int = field(init=False, repr=False, default=0)
-    """Current index of iterable data."""
-
-    @property
-    @abc.abstractmethod
-    def len_data(self) -> int:
-        """Length of iterable plot data."""
-
     @property
     @abc.abstractmethod
     def artists(self) -> list[Artist]:
@@ -88,7 +80,7 @@ class LiveBase(abc.ABC):
         """
 
     @abc.abstractmethod
-    def _get_plot_data(self) -> tuple[np.ndarray | list[np.ndarray]]:
+    def _get_plot_data(self, idx: int) -> tuple[np.ndarray | list[np.ndarray]]:
         """
         Method returning new data to plot.
 
@@ -119,57 +111,6 @@ class LiveBase(abc.ABC):
             Upper limit of y-axis
 
         """
-
-    @property
-    def current_idx(self) -> int:
-        """Current plot data index."""
-        return self._idx
-
-    @property
-    def max_idx(self) -> int:
-        """Maximum allowed plot data index."""
-        if self.len_data < 1:
-            return 0
-
-        return self.len_data - 1
-
-    def _increment(self, step: int):
-        """
-        Increment the data index of this plot by step.
-
-        Parameters
-        ----------
-        step:
-            Amount to increase data index
-
-        """
-        self._idx += step
-
-        if self._idx > self.max_idx:
-            self._idx = self.max_idx
-
-    def _decrement(self, step: int):
-        """
-        Decrement the data index of this plot by step.
-
-        Parameters
-        ----------
-        step:
-            Amount to decrease data index
-
-        """
-        self._idx -= step
-
-        if self._idx < 0:
-            self._idx = 0
-
-    def _jump_to_end(self):
-        """Move data index to the end of plotting data."""
-        self._idx = self.max_idx
-
-    def _jump_to_beginning(self):
-        """Move data index to the beginning of plotting data."""
-        self._idx = 0
 
     def update_axis_limits(self, scale_factor: float = _AXIS_SCALE_FACTOR):
         """
@@ -211,26 +152,26 @@ class LiveBase(abc.ABC):
         for artist in self.artists:
             self.ax.draw_artist(artist)
 
-    def _update_plot(self):
+    def _update_plot(self, idx: int):
         """
         Update plot by fetching new data and piping it to the appropriate
         `update_artist` method.
 
         """
-        self._update_artists(*self._get_plot_data())
+        self._update_artists(*self._get_plot_data(idx))
 
-    def _animate_step(self, step: int):
-        """
-        Increment the data index by step and then update the plot.
+    # def _animate_step(self, step: int):
+    #     """
+    #     Increment the data index by step and then update the plot.
 
-        This method is used in the animation function to step the plot along as
-        it captures each frame.
+    #     This method is used in the animation function to step the plot along as
+    #     it captures each frame.
 
-        Parameters
-        ----------
-        step:
-            Amount to increment data index
+    #     Parameters
+    #     ----------
+    #     step:
+    #         Amount to increment data index
 
-        """
-        self._increment(step=step)
-        self._update_plot()
+    #     """
+    #     self._increment(step=step)
+    #     self._update_plot()

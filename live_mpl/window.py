@@ -34,7 +34,7 @@ import gi
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-from .tab import CallbackActionsEnum, Tab
+from .tab import Tab
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk, Gtk  # noqa: E402 - import must be under previous line
@@ -68,7 +68,10 @@ class Window(Gtk.Window):
 
     """
 
-    title: InitVar[str] = "PythonPlot"
+    len_data: int
+    """Length of data to be animated (follows standards of np.shape)."""
+
+    title: InitVar[str]
     """Title of the plotting window."""
 
     slow_step: int = _SLOW_STEP
@@ -82,6 +85,9 @@ class Window(Gtk.Window):
 
     _step: int = field(init=False, repr=False, default=1)
     """Data movement step size."""
+
+    _idx: int = field(init=False, repr=False, default=0)
+    """Data index."""
 
     _update_lock: threading.Lock = field(
         init=False, repr=False, default_factory=threading.Lock
@@ -99,6 +105,9 @@ class Window(Gtk.Window):
 
     _notebook: Gtk.Notebook = field(init=False, repr=False)
 
+    def get_index(self) -> int:
+        return self._idx
+
     def register_tab(self, tab: Tab):
         """
         Add the given tab to the Window and register it to receive
@@ -113,14 +122,6 @@ class Window(Gtk.Window):
         """
         self._notebook.append_page(tab._page, Gtk.Label(tab.tab_name))
         self._tabs.append(tab)
-
-    @staticmethod
-    def enable_latex() -> None:
-        plt.rcParams["text.usetex"] = True
-
-    @staticmethod
-    def disable_latex() -> None:
-        plt.rcParams["text.usetex"] = False
 
     def loop(self, start_gtk: bool = True):
         """
@@ -167,6 +168,44 @@ class Window(Gtk.Window):
         self.connect("scroll-event", self._mouse_scroll_callback)
         self.connect("configure-event", self._mark_backgrounds_stale)
 
+    def _increment(self, step: int):
+        """
+        Increment the data index of this plot by step.
+
+        Parameters
+        ----------
+        step:
+            Amount to increase data index
+
+        """
+        self._idx += step
+
+        if self._idx >= self.len_data:
+            self._idx = self.len_data - 1
+
+    def _decrement(self, step: int):
+        """
+        Decrement the data index of this plot by step.
+
+        Parameters
+        ----------
+        step:
+            Amount to decrease data index
+
+        """
+        self._idx -= step
+
+        if self._idx < 0:
+            self._idx = 0
+
+    def _jump_to_end(self):
+        """Move data index to the end of plotting data."""
+        self._idx = self.len_data - 1
+
+    def _jump_to_beginning(self):
+        """Move data index to the beginning of plotting data."""
+        self._idx = 0
+
     def _tab_change_callback(self, notebook, page, page_num):
         """
         Callback for a tab change in the window.
@@ -186,9 +225,11 @@ class Window(Gtk.Window):
     def _mouse_scroll_callback(self, widget, event) -> bool:
         """Callback for a mouse scroll event occuring in the window."""
         if event.direction == Gdk.ScrollDirection.UP:
-            self._take_action_on_tabs(CallbackActionsEnum.INCREMENT)
+            self._increment(self._step)
         elif event.direction == Gdk.ScrollDirection.DOWN:
-            self._take_action_on_tabs(CallbackActionsEnum.DECREMENT)
+            self._decrement(self._step)
+
+        self._update_tabs()
 
         # Return true to capture event
         return True
@@ -196,26 +237,31 @@ class Window(Gtk.Window):
     def _keyboard_callback(self, widget, event) -> bool:
         """Callback for a keyboard press event occuring in the window."""
         if event.keyval == Gdk.KEY_Right:
-            self._take_action_on_tabs(CallbackActionsEnum.INCREMENT)
+            self._increment(self._step)
         elif event.keyval == Gdk.KEY_Left:
-            self._take_action_on_tabs(CallbackActionsEnum.DECREMENT)
+            self._decrement(self._step)
         elif event.keyval == Gdk.KEY_Up:
-            self._take_action_on_tabs(CallbackActionsEnum.END)
+            self._jump_to_end()
         elif event.keyval == Gdk.KEY_Down:
-            self._take_action_on_tabs(CallbackActionsEnum.BEGIN)
-        elif event.keyval == Gdk.KEY_b:
-            self._take_action_on_tabs(CallbackActionsEnum.REDRAW)
+            self._jump_to_beginning()
         elif event.keyval == Gdk.KEY_s:
             self._step = self.slow_step
         elif event.keyval == Gdk.KEY_m:
             self._step = self.medium_step
         elif event.keyval == Gdk.KEY_f:
             self._step = self.fast_step
+        elif event.keyval == Gdk.KEY_b:
+            self.current_tab._redraw_artists()
+            return True
+        else:
+            return True
+
+        self._update_tabs()
 
         # Return true to capture event
         return True
 
-    def _take_action_on_tabs(self, action: CallbackActionsEnum):
+    def _update_tabs(self):
         """
         This method takes the given action on all tabs in the window.
 
@@ -235,9 +281,9 @@ class Window(Gtk.Window):
         self.current_tab._draw_bg()
 
         for tab in self._tabs:
-            tab._take_action(action, self._step)
+            tab._update_all(self._idx)
 
-        self.current_tab._take_action(CallbackActionsEnum.REDRAW)
+        self.current_tab._redraw_artists()
 
         self.current_tab._blit()
         self._update_lock.release()

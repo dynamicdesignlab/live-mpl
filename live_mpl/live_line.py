@@ -71,6 +71,9 @@ class LiveLine(LiveBase):
     value is only respected if the numpy data has more than 1 dimension.
     """
 
+    animated: bool = True
+    """Whether plot should be animated or not."""
+
     plot_kwargs: InitVar[dict[str, Any]] = None
     """
     Optional keyword arguments passed directly to matplotlib plot function.
@@ -100,24 +103,20 @@ class LiveLine(LiveBase):
     """Line artist rendering the actual plot."""
 
     @property
-    def len_data(self):
-        return self._x.shape[self.iter_axis]
-
-    @property
     def artists(self) -> list[Artist]:
         return [self._line]
 
-    def _update_artists(self, plot_x: _T, plot_y: _T):
+    def _update_artists(self, plot_x: _T, plot_y: _T, idx: int = 0):
         try:
-            self.callback_func(self._line, self._idx)
+            self.callback_func(self._line, idx)
         except TypeError:
             pass
 
         self._line.set_data(plot_x, plot_y)
 
-    def _get_plot_data(self) -> tuple[_T, ...]:
-        plot_x = self._x.take(indices=self.current_idx, axis=self.iter_axis)
-        plot_y = self._y.take(indices=self.current_idx, axis=self.iter_axis)
+    def _get_plot_data(self, idx: int) -> tuple[_T, ...]:
+        plot_x = self._x.take(indices=idx, axis=self.iter_axis)
+        plot_y = self._y.take(indices=idx, axis=self.iter_axis)
         return plot_x, plot_y
 
     def _get_data_axis_limits(self) -> tuple[float, float, float, float]:
@@ -144,5 +143,5 @@ class LiveLine(LiveBase):
             full_kwargs |= plot_kwargs
 
         self._line, *_ = self.ax.plot(
-            *self._get_plot_data(), animated=True, **full_kwargs
+            *self._get_plot_data(idx=0), animated=self.animated, **full_kwargs
         )

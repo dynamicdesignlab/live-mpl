@@ -73,6 +73,9 @@ class LiveFancyBBox(LiveBase):
     height: float
     """Height of the rectangle in axis units."""
 
+    animated: bool = True
+    """Whether plot should be animated or not."""
+
     boxstyle: InitVar[str | BoxStyle] = BoxStyle("Round", pad=0.1)
     """
     Style of the FancyBBoxPatch.
@@ -122,16 +125,13 @@ class LiveFancyBBox(LiveBase):
             width=self.width,
             height=self.height,
             boxstyle=boxstyle,
-            animated=True,
+            animated=self.animated,
             **plot_kwargs,
         )
 
         self.ax.add_patch(self._patch)
+        self._update_artists(*self._get_plot_data(idx=0))
         self.update_axis_limits()
-
-    @property
-    def len_data(self) -> int:
-        return self._x.size
 
     @property
     def artists(self) -> list[Artist]:
@@ -147,10 +147,10 @@ class LiveFancyBBox(LiveBase):
 
         self._patch.set_transform(transform + self.ax.transData)
 
-    def _get_plot_data(self) -> tuple[_T, ...]:
-        x_pos = self._x[self.current_idx]
-        y_pos = self._y[self.current_idx]
-        angle = self._theta[self.current_idx]
+    def _get_plot_data(self, idx: int) -> tuple[_T, ...]:
+        x_pos = self._x[idx]
+        y_pos = self._y[idx]
+        angle = self._theta[idx]
         return x_pos, y_pos, angle
 
     def _get_data_axis_limits(self) -> tuple[float, float, float, float]:

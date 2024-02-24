@@ -4,6 +4,7 @@ This module implements the LivePhasePort concrete class and associated functions
 Use this module to create interactive phase portrait plots.
 
 """
+
 __author__ = "John Talbot"
 __contact__ = "john.talbot@stanford.edu"
 __copyright__ = "Copyright 2023"
@@ -78,10 +79,6 @@ class LiveStreamlines(LiveBase):
     )
 
     @property
-    def len_data(self):
-        return len(self._streamlines)
-
-    @property
     def artists(self) -> list[Artist]:
         return [item for item in self._current_arrows] + [self._current_lines]
 
@@ -124,7 +121,7 @@ class LiveStreamlines(LiveBase):
 
         self._current_lines = lines
 
-    def _get_plot_data(self) -> tuple[LineCollection, list[FancyArrowPatch]]:
+    def _get_plot_data(self, idx: int) -> tuple[LineCollection, list[FancyArrowPatch]]:
         if not self._streamlines:
             warnings.warn(
                 (
@@ -134,7 +131,7 @@ class LiveStreamlines(LiveBase):
             )
             return None, None
 
-        return self._streamlines[self.current_idx], self._streamarrows[self.current_idx]
+        return self._streamlines[idx], self._streamarrows[idx]
 
     def __post_init__(
         self, bounds: tuple[float] = None, plot_kwargs: dict[str, Any] = None

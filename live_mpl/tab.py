@@ -25,7 +25,6 @@ __copyright__ = "Copyright 2022"
 __date__ = "2022/05/07"
 __license__ = "MIT"
 
-import enum
 from dataclasses import InitVar, dataclass, field
 from typing import Any, List
 
@@ -38,23 +37,6 @@ from .live_base import LiveBase
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk  # noqa: E402 - import must be under previous line
-
-
-class CallbackActionsEnum(enum.Enum):
-    """Enumeration of possible actions to take on a Tab."""
-
-    INCREMENT = enum.auto()
-    DECREMENT = enum.auto()
-    END = enum.auto()
-    BEGIN = enum.auto()
-    REDRAW = enum.auto()
-
-
-class _NavigationToolbarNoCoordinates(backend_gtk3.NavigationToolbar2GTK3):
-    """Custom toolbar without the normal coordinate readout of the default toolbar."""
-
-    def set_message(self, s):
-        pass
 
 
 @dataclass
@@ -145,45 +127,20 @@ class Tab:
         self._canvas.blit(self._figure.bbox)
         self._canvas.flush_events()
 
-    def _increment_all(self, step: int):
+    def _update_all(self, idx: int):
         """
-        Increment all registered live plots by step.
+        Update all registered live with new index.
 
         Parameters
         ----------
-        step:
-            Amount to increase plot data indices
+        idx:
+            New data index
 
         """
         for plot in self._plots:
-            plot._increment(step)
-            plot._update_plot()
+            plot._update_plot(idx)
 
-    def _decrement_all(self, step: int):
-        """
-        Decrement all registered live plots by step.
-
-        Parameters
-        ----------
-        step:
-            Amount to decrease plot data indices
-
-        """
-        for plot in self._plots:
-            plot._decrement(step)
-            plot._update_plot()
-
-    def _jump_all_to_end(self):
-        """Jump all plots to their last data item."""
-        for plot in self._plots:
-            plot._jump_to_end()
-            plot._update_plot()
-
-    def _jump_all_to_beginning(self):
-        """Jump all plots to their firse data item."""
-        for plot in self._plots:
-            plot._jump_to_beginning()
-            plot._update_plot()
+        self._set_idx_msg(idx)
 
     def _redraw_artists(self):
         """Redraw all plot artists."""
@@ -195,30 +152,9 @@ class Tab:
         for plot in self._plots:
             plot.update_axis_limits()
 
-    def _take_action(self, action: CallbackActionsEnum, step: int = None):
-        """
-        Given an action and params, take that action on all plots
-
-        Parameters
-        ----------
-        action: CallbackActionsEnum
-            Action to take on all plots
-        step:
-            Amount to increase or decreas plot data index
-
-        """
-        if action == CallbackActionsEnum.INCREMENT:
-            self._increment_all(step)
-        elif action == CallbackActionsEnum.DECREMENT:
-            self._decrement_all(step)
-        elif action == CallbackActionsEnum.END:
-            self._jump_all_to_end()
-        elif action == CallbackActionsEnum.BEGIN:
-            self._jump_all_to_beginning()
-        elif action == CallbackActionsEnum.REDRAW:
-            self._redraw_artists()
-        else:
-            raise NotImplementedError
+    def _set_idx_msg(self, idx: int):
+        self._idx_label.set_markup(f"<small>{idx}</small>")
+        self._idx_label.set_label(f"Index = {idx}")
 
     def __post_init__(self, suptitle: str):
         self._page = Gtk.VBox()
@@ -229,21 +165,10 @@ class Tab:
         self._bottom_box = Gtk.Box()
         self._page.pack_start(self._bottom_box, False, False, 0)
 
-        # toolbar = _NavigationToolbarNoCoordinates(self._canvas, self._page)
-        toolbar = _NavigationToolbarNoCoordinates(self._canvas)
+        self._toolbar = backend_gtk3.NavigationToolbar2GTK3(canvas=self._canvas)
+        self._idx_label = Gtk.Label()
+        self._idx_label.set_justify(Gtk.Justification.RIGHT)
 
-        self._init_figure(toolbar, suptitle)
-
-    def _init_figure(self, toolbar: backend_gtk3.NavigationToolbar2GTK3, suptitle: str):
-        """
-        Initialize figure with custom toolbar
-
-        Parameters
-        ----------
-        toolbar:
-            Toolbar to use with figure.
-
-        """
-        toolbar.update()
-        self._bottom_box.pack_start(toolbar, False, False, 0)
+        self._bottom_box.pack_start(self._toolbar, False, False, 0)
+        self._bottom_box.pack_start(self._idx_label, False, False, 0)
         self._figure.suptitle(suptitle)
