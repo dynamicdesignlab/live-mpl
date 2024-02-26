@@ -38,6 +38,8 @@ from .live_base import LiveBase
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk  # noqa: E402 - import must be under previous line
 
+_DEFAULT_FIG_KWARGS = {"tight_layout": True}
+
 
 @dataclass
 class Tab:
@@ -64,6 +66,9 @@ class Tab:
 
     suptitle: InitVar[str] = None
     """Supertitle to use for all subplots."""
+
+    fig_kwargs: InitVar[dict[str, Any]] = None
+    """Keyword arguments to pass to the matplotlib `Figure`_ constructor."""
 
     _figure: Figure = field(init=False, repr=False, default=None)
     """Matplotlib figure to draw axes on."""
@@ -156,9 +161,15 @@ class Tab:
         self._idx_label.set_markup(f"<small>{idx}</small>")
         self._idx_label.set_label(f"Index = {idx}")
 
-    def __post_init__(self, suptitle: str):
+    def __post_init__(self, suptitle: str, fig_kwargs: dict[str, Any]):
         self._page = Gtk.VBox()
-        self._figure = Figure(tight_layout=True)
+
+        full_kwargs = _DEFAULT_FIG_KWARGS
+
+        if fig_kwargs is not None:
+            full_kwargs |= fig_kwargs
+
+        self._figure = Figure(**full_kwargs)
         self._canvas = backend_gtk3agg.FigureCanvasGTK3Agg(self._figure)
         self._page.pack_start(self._canvas, True, True, 0)
 
