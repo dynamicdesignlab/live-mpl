@@ -49,7 +49,7 @@ _MEDIUM_STEP = 10
 _FAST_STEP = 50
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Window(Gtk.Window):
     """
     This class subclasses a GTK window acting as the base for interactive plots.
