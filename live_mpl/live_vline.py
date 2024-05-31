@@ -78,7 +78,7 @@ class LiveVLine(LiveBase):
     def artists(self) -> list[Artist]:
         return [self._line]
 
-    def _update_artists(self, plot_x: np.ndarray):
+    def _update_artists(self, idx: int, plot_x: np.ndarray):
         self._line.set_xdata(plot_x)
 
     def _get_plot_data(self, idx: int) -> tuple[np.ndarray, ...]:

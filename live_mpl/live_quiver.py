@@ -81,7 +81,7 @@ class LiveQuiver(LiveBase):
     def artists(self) -> list[Artist]:
         return [self._quiver]
 
-    def _update_artists(self, plot_x: _T, plot_y: _T, plot_u: _T, plot_v: _T):
+    def _update_artists(self, idx: int, plot_x: _T, plot_y: _T, plot_u: _T, plot_v: _T):
         self._quiver.set_offsets(np.column_stack((plot_x, plot_y)))
         self._quiver.set_UVC(plot_u, plot_v)
 

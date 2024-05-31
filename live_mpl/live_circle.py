@@ -86,7 +86,7 @@ class LiveCircle(LiveBase):
     def artists(self) -> list[Artist]:
         return [self._patch]
 
-    def _update_artists(self, x: float, y: float, radius: float):
+    def _update_artists(self, idx: int, x: float, y: float, radius: float):
         self._patch.set_center(xy=(x, y))
         self._patch.set_radius(radius=radius)
 

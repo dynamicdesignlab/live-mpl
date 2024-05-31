@@ -116,7 +116,7 @@ class LiveComet(LiveBase):
     def artists(self) -> list[Artist]:
         return [self._head, self._tail]
 
-    def _update_artists(self, head_x: _T, head_y: _T, tail_x: _T, tail_y: _T):
+    def _update_artists(self, idx: int, head_x: _T, head_y: _T, tail_x: _T, tail_y: _T):
         self._head.set_data(head_x, head_y)
         self._tail.set_data(tail_x, tail_y)
 

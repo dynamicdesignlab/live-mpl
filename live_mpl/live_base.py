@@ -66,7 +66,7 @@ class LiveBase(abc.ABC):
         """Matplotlib artists associated with plot"""
 
     @abc.abstractmethod
-    def _update_artists(self, *data_args: tuple[np.ndarray]):
+    def _update_artists(self, idx: int, *data_args: tuple[np.ndarray]):
         """
         Method to update artist given new data.
 
@@ -74,6 +74,8 @@ class LiveBase(abc.ABC):
 
         Parameters
         ----------
+        idx:
+            Integer index of current data display
         data_args:
             Tuple of data output by `get_plot_data`
 
@@ -158,7 +160,7 @@ class LiveBase(abc.ABC):
         `update_artist` method.
 
         """
-        self._update_artists(*self._get_plot_data(idx))
+        self._update_artists(idx, *self._get_plot_data(idx))
 
     # def _animate_step(self, step: int):
     #     """

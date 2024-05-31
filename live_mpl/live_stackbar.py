@@ -106,7 +106,7 @@ class LiveStackBar(LiveBase):
     def artists(self) -> list[Artist]:
         return list(chain(*self._bar_cts))
 
-    def _update_artists(self, _: np.ndarray, plot_y: np.ndarray):
+    def _update_artists(self, idx: int, _: np.ndarray, plot_y: np.ndarray):
         bottoms = np.zeros(self.num_cols)
 
         for yvals, bar_ct in zip(plot_y.T, self._bar_cts):

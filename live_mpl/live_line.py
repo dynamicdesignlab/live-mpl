@@ -106,7 +106,7 @@ class LiveLine(LiveBase):
     def artists(self) -> list[Artist]:
         return [self._line]
 
-    def _update_artists(self, plot_x: _T, plot_y: _T, idx: int = 0):
+    def _update_artists(self, idx: int, plot_x: _T, plot_y: _T):
         try:
             self.callback_func(self._line, idx)
         except TypeError:

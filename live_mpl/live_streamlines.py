@@ -98,7 +98,9 @@ class LiveStreamlines(LiveBase):
         """
         return self._bounds
 
-    def _update_artists(self, lines: LineCollection, arrows: list[FancyArrowPatch]):
+    def _update_artists(
+        self, idx: int, lines: LineCollection, arrows: list[FancyArrowPatch]
+    ):
         if lines is None:
             return
 

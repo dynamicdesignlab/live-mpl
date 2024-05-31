@@ -130,14 +130,14 @@ class LiveFancyBBox(LiveBase):
         )
 
         self.ax.add_patch(self._patch)
-        self._update_artists(*self._get_plot_data(idx=0))
+        self._update_artists(0, *self._get_plot_data(idx=0))
         self.update_axis_limits()
 
     @property
     def artists(self) -> list[Artist]:
         return [self._patch]
 
-    def _update_artists(self, x: float, y: float, theta: float):
+    def _update_artists(self, idx: int, x: float, y: float, theta: float):
         self._patch.set_x(x)
         self._patch.set_y(y)
 

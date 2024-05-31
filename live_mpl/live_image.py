@@ -123,7 +123,7 @@ class LiveImage(LiveBase):
     def artists(self) -> list[Artist]:
         return [self._image]
 
-    def _update_artists(self, x: float, y: float, theta: float):
+    def _update_artists(self, idx: int, x: float, y: float, theta: float):
         transform = Affine2D().rotate_deg(theta).translate(x, y)
         self._image.set_transform(transform + self.ax.transData)
 
