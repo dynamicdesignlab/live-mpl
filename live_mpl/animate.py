@@ -37,6 +37,8 @@ from typing import Callable
 from matplotlib.animation import FuncAnimation
 from matplotlib.figure import Figure
 from rich import progress
+from dataclasses import dataclass, field
+import functools
 
 from .live_base import LiveBase
 
@@ -47,8 +49,28 @@ _ProgBar = progress.Progress(
     progress.TimeElapsedColumn(),
 )
 
+@dataclass
+class _ProgressKeeper:
+    num_frames: int
+    prog: progress.Progress
+    _idx: int = field(init=False, repr=False, default=0)
 
-def _create_ani_func(plots: list[LiveBase]) -> tuple[Callable, int]:
+    @property
+    def idx(self) -> int:
+        return self._idx
+
+    def create_ani_callback(self, prog: progress.Progress):
+        task_id = prog.add_task("animator", total=self.num_frames)
+
+        def progress_callback(current_frame: int, num_frames):
+            self._idx += 1
+            prog.update(
+                task_id=task_id, total=num_frames, completed=current_frame
+            )
+        
+        return progress_callback, task_id
+
+def _create_ani_func(plots: list[LiveBase]) -> Callable:
     """
     Function generator to create animate function used by the matplotlib
     FuncAnimation interface.
@@ -66,23 +88,21 @@ def _create_ani_func(plots: list[LiveBase]) -> tuple[Callable, int]:
 
     """
 
-    num_frames = plots[0].len_data
-
-    def take_step(*_):
+    def take_step(frame, idx:int):
         for item in plots:
-            item._animate_step(1)
+            item._update_plot(idx)
 
         return [artist for item in plots for artist in item.artists]
 
-    return take_step, num_frames
+    return take_step
 
 
 def animate(
     fig: Figure,
     plots: list[LiveBase],
+    num_frames: int,
     save_path: Path,
     time_step_s: float,
-    show_progress: bool = True,
     **kwargs,
 ):
     """
@@ -124,35 +144,29 @@ def animate(
 
     """
     time_step_ms = 1_000.0 * time_step_s
-    func, num_frames = _create_ani_func(plots)
 
-    anim = FuncAnimation(
-        fig,
-        func=func,
-        frames=num_frames,
-        interval=time_step_ms,
-        blit=True,
-        repeat=True,
-    )
+    with _ProgBar as prog:
+        prog_keeper = _ProgressKeeper(num_frames=num_frames, prog=prog)
+        func = functools.partial(_create_ani_func(plots), idx=prog_keeper.idx)
 
-    if show_progress:
-        with _ProgBar as prog:
-            task_id = prog.add_task("animator", total=num_frames)
+        anim = FuncAnimation(
+            fig,
+            func=func,
+            frames=num_frames,
+            interval=time_step_ms,
+            blit=True,
+            repeat=True,
+        )
 
-            def progress_callback(current_frame: int, total_frames: int):
-                prog.update(
-                    task_id=task_id, total=total_frames, completed=current_frame
-                )
-
-            anim.save(str(save_path), progress_callback=progress_callback, **kwargs)
-            prog.update(task_id=task_id, total=num_frames, completed=num_frames)
-    else:
-        anim.save(str(save_path), **kwargs)
+        progress_callback, task_id = prog_keeper.create_ani_callback(prog=prog)
+        anim.save(str(save_path), progress_callback=progress_callback, **kwargs)
+        prog.update(task_id=task_id, total=num_frames, completed=num_frames)
 
 
 def animate_now(
     fig: Figure,
     plots: list[LiveBase],
+    num_frames: int,
     time_step_s: float,
 ):
     """
@@ -194,7 +208,7 @@ def animate_now(
 
     """
     time_step_ms = 1_000.0 * time_step_s
-    func, num_frames = _create_ani_func(plots)
+    func, num_frames = _create_ani_func(plots, num_frames)
     return FuncAnimation(
         fig,
         func=func,

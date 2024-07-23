@@ -6,16 +6,17 @@ from live_mpl.live_image import LiveImage
 from live_mpl.tab import Tab
 from live_mpl.window import Window
 
-IMAGE_PATH = Path(__file__).parent.joinpath("cool_penguin_icon.png")
+LEN_DATA = 100
+IMAGE_PATH = Path(__file__).parent.joinpath("noun-cool-penguin-57269.png")
 
 
 def main():
     # Create data
-    theta_rad = np.linspace(0, 2 * np.pi, 100)
+    theta_rad = np.linspace(0, 2 * np.pi, LEN_DATA)
     x_data = 2.0 * np.cos(theta_rad)
     y_data = 2.0 * np.sin(theta_rad)
 
-    win = Window("Example Plot")
+    win = Window(len_data=LEN_DATA, title="Image Example")
 
     # Create tab and register to window
     tab = Tab("First Tab")
@@ -40,6 +41,7 @@ def main():
     tab.register_plot(im)
     ax.set_xlim(-6, 6)
     ax.set_ylim(-6, 6)
+    ax.set_aspect(aspect="equal", adjustable="box")
 
     # Call this at the very end to run Gtk's event loop
     win.loop()

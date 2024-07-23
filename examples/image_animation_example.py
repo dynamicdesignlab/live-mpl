@@ -29,9 +29,11 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 
-from live_mpl import LiveBase, LiveLine, animate, create_live_vehicle
+from live_mpl import LiveBase, LiveImage, animate
+from pathlib import Path
 
 NUM_FRAMES = 100
+IMAGE_PATH = Path(__file__).parent.joinpath("noun-cool-penguin-57269.png")
 
 
 def create_sample_data() -> dict[str, np.ndarray]:
@@ -43,12 +45,14 @@ def create_sample_data() -> dict[str, np.ndarray]:
         Dictionary of vehicle position data
 
     """
-    psi_rad = np.linspace(0, 2 * np.pi, NUM_FRAMES)
+    theta_rad = np.linspace(0, 2 * np.pi, NUM_FRAMES)
+    x_data = 2.0 * np.cos(theta_rad)
+    y_data = 2.0 * np.sin(theta_rad)
+
     return {
-        "psi_rad": psi_rad,
-        "east_m": 15 * np.cos(psi_rad),
-        "north_m": 15 * np.sin(psi_rad),
-        "delta_rad": np.radians(10 * np.ones(psi_rad.shape)),
+        "theta_rad": theta_rad,
+        "x_data": x_data,
+        "y_data": y_data
     }
 
 
@@ -68,30 +72,14 @@ def create_plots(ax: Axes, data: dict[str, np.ndarray]) -> list[LiveBase]:
         List of interactive plots
 
     """
-    veh_plots = create_live_vehicle(
-        ax,
-        x_center=data["east_m"],
-        y_center=data["north_m"],
-        angle_deg=data["psi_rad"],
-        steering_deg=data["delta_rad"],
-        animated=True,
-    )
-
-    line_plot = LiveLine(
+    return [LiveImage(
         ax=ax,
-        x_data=data["east_m"],
-        y_data=data["north_m"],
-        iter_axis=0,
-        animated=True,
-        plot_kwargs={
-            "marker": "^",
-            "markerfacecolor": "yellow",
-            "markeredgecolor": "black",
-        },
-    )
-
-    return veh_plots + [line_plot]
-
+        x_center=data["x_data"],
+        y_center=data["y_data"],
+        angle_deg=np.degrees(data["theta_rad"]),
+        image_path=IMAGE_PATH,
+        image_extent=[-1.0, 1.0, -1.5, 1.5],
+    )]
 
 def main():
     data = create_sample_data()
@@ -100,11 +88,11 @@ def main():
     # than a Window and Tab object.
     fig, ax = plt.subplots()
 
-    ax.plot(data["east_m"], data["north_m"], "k--")  # Plot static path of vehicle
+    ax.plot(data["x_data"], data["y_data"], "k--")  # Plot static path of vehicle
     plots = create_plots(ax=ax, data=data)  # Create interactive plots
 
     # Some plot customization
-    ax.set(xlabel="East [m]", ylabel="North [m]", title="Animated Vehicle")
+    ax.set(xlabel="X Position", ylabel="Y Position", title="Animated Image")
     ax.grid(True)
     ax.axis("equal")
 
@@ -112,8 +100,8 @@ def main():
     animate.animate(
         save_path="animation.mp4",
         fig=fig,
-        num_frames=NUM_FRAMES,
         plots=plots,
+        num_frames=NUM_FRAMES,
         time_step_s=0.1,
     )
 

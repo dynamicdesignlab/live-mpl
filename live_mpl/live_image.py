@@ -118,6 +118,7 @@ class LiveImage(LiveBase):
             self.ax, extent=self.image_extent, animated=self.animated, **plot_kwargs
         )
         self._image.set_data(Image.open(image_path))
+        # self._image = self.ax.imshow(Image.open(image_path), extent=self.image_extent, animated=True, **plot_kwargs)
 
     @property
     def artists(self) -> list[Artist]:

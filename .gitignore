@@ -22,3 +22,6 @@ poetry.lock
 
 # Generated html files
 *.html
+
+# MacOS
+*.DS_Store

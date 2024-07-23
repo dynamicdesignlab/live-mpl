@@ -129,8 +129,8 @@ class LiveLine(LiveBase):
             raise InvalidIterationAxis(iter_axis=self.iter_axis, num_dims=x_data.ndim)
 
     def __post_init__(self, x_data: _T, y_data: _T, plot_kwargs: dict[str, Any] = None):
-        x_data = np.atleast_2d(x_data)
-        y_data = np.atleast_2d(y_data)
+        x_data = np.atleast_1d(x_data)
+        y_data = np.atleast_1d(y_data)
 
         if np.atleast_1d(x_data.squeeze()).ndim == 1:
             self.iter_axis = 0

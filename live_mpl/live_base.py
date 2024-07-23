@@ -153,6 +153,7 @@ class LiveBase(abc.ABC):
         """Redraw plot artist on canvas for blitting."""
         for artist in self.artists:
             self.ax.draw_artist(artist)
+            # self.ax.draw(artist)
 
     def _update_plot(self, idx: int):
         """
@@ -161,19 +162,3 @@ class LiveBase(abc.ABC):
 
         """
         self._update_artists(idx, *self._get_plot_data(idx))
-
-    # def _animate_step(self, step: int):
-    #     """
-    #     Increment the data index by step and then update the plot.
-
-    #     This method is used in the animation function to step the plot along as
-    #     it captures each frame.
-
-    #     Parameters
-    #     ----------
-    #     step:
-    #         Amount to increment data index
-
-    #     """
-    #     self._increment(step=step)
-    #     self._update_plot()
